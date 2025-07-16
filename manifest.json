@@ -1,7 +1,7 @@
 {
   "dxt_version": "0.1",
   "name": "things-dxt",
-  "display_name": "Things Task Manager",
+  "display_name": "Things (AppleScript)",
   "version": "1.0.0",
   "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
   "long_description": "This extension provides seamless integration between Claude Desktop and Things task manager through AppleScript automation. Create, manage, and organize your tasks directly from Claude conversations. Features include creating to-dos, projects, areas, tags, and managing your task workflow efficiently.",
@@ -10,21 +10,30 @@
     "email": "matt@mbmccormick.com",
     "url": "https://github.com/mbmccormick"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mbmccormick/things-dxt.git"
+  },
+  "homepage": "https://github.com/mbmccormick/things-dxt",
+  "documentation": "https://github.com/mbmccormick/things-dxt/blob/main/README.md",
+  "support": "https://github.com/mbmccormick/things-dxt/issues",
+  "icon": "icon.png",
   "license": "MIT",
   "keywords": ["tasks", "productivity", "things", "todo", "project management", "applescript"],
   "compatibility": {
+    "claude_desktop": ">=0.10.0",
     "platforms": ["darwin"],
-    "min_claude_desktop_version": "0.1.0"
+    "runtimes": {
+      "node": ">=16.0.0"
+    }
   },
+  "tools_generated": true,
   "server": {
     "type": "node",
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
-      "env": {
-        "DEBUG": "false"
-      }
+      "args": ["${__dirname}/server/index.js"]
     }
   },
   "tools": [
