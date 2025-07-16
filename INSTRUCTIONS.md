@@ -3,6 +3,7 @@ Help me build an integration for Claude Desktop that provides access to Things, 
 Things provides an AppleScript integration to automate certain actions on Mac. This functionality is documented in the following specifications:
    - https://culturedcode.com/things/support/articles/2803572/ - Using AppleScript
    - https://culturedcode.com/things/support/articles/4562654/ - Things AppleScript Commands
+   - https://culturedcode.com/things/download/Things3AppleScriptGuide.pdf - Things AppleScript Guide
 
 I want to build this as a Desktop Extension, abbreviated as "DXT". Please follow these steps:
 

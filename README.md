@@ -1,17 +1,19 @@
 # Things DXT - Claude Desktop Extension
 
-A Claude Desktop Extension that provides seamless integration with Things 3, the award-winning personal task manager for macOS. This extension allows you to create, manage, and organize your tasks directly from Claude conversations using AppleScript automation.
+A comprehensive Claude Desktop Extension that provides seamless integration with Things 3, the award-winning personal task manager for macOS. This extension allows you to create, manage, organize, search, and maintain your entire task workflow directly from Claude conversations using robust AppleScript automation.
 
 ## Features
 
-- **Create Tasks**: Add new to-dos with titles, notes, due dates, projects, areas, and tags
-- **Create Projects**: Organize your work with new projects and assign them to areas
-- **Create Areas**: Set up high-level organization areas for your projects and tasks
-- **Retrieve Data**: Get lists of your to-dos, projects, and areas
-- **Task Management**: Complete tasks and show specific items in Things
-- **Quick Entry**: Open Things Quick Entry panel with optional pre-filled text
-- **Search**: Find items across your Things database
-- **Security**: Built-in input validation and AppleScript injection protection
+- **Complete Task Lifecycle**: Create, read, update, complete, cancel, and delete tasks
+- **Project Management**: Full project creation, management, and organization
+- **Area Organization**: Create and manage high-level organizational areas
+- **Advanced Search**: Powerful search across all your Things data with filtering
+- **Flexible Retrieval**: Get tasks by list type, status, timeframe, and more
+- **Update Operations**: Modify existing tasks with full parameter control
+- **Status Management**: Complete, cancel, or delete items as needed
+- **Upcoming Tasks**: Time-based task retrieval for planning
+- **Data Integrity**: Comprehensive input validation and error handling
+- **Security**: Built-in AppleScript injection protection and safe execution
 
 ## Requirements
 
@@ -36,29 +38,23 @@ A Claude Desktop Extension that provides seamless integration with Things 3, the
 
 ## Available Tools
 
-### Task Creation
+> **Date Parameter Note**: This extension uses user-friendly date terminology:
+> - `due_date` = "when scheduled to work on" (appears in Today/Upcoming lists)
+> - `deadline` = "when actually due" (the final deadline)
+
+### Creation Operations
 
 #### `create_todo`
 Create a new to-do item in Things.
 
 **Parameters:**
 - `name` (required): The title of the to-do item
-- `notes` (optional): Additional notes for the to-do
-- `due_date` (optional): Due date in YYYY-MM-DD format
+- `notes` (optional): Additional notes (max 10,000 characters)
+- `due_date` (optional): When to work on it in YYYY-MM-DD format
+- `deadline` (optional): Final deadline in YYYY-MM-DD format
 - `project` (optional): Project name to add the to-do to
 - `area` (optional): Area name to add the to-do to
-- `tags` (optional): Array of tag names
-
-**Example:**
-```json
-{
-  "name": "Review quarterly reports",
-  "notes": "Focus on sales and marketing metrics",
-  "due_date": "2024-12-31",
-  "project": "Q4 Planning",
-  "tags": ["work", "urgent"]
-}
-```
+- `tags` (optional): Array of tag names (max 50)
 
 #### `create_project`
 Create a new project in Things.
@@ -67,7 +63,8 @@ Create a new project in Things.
 - `name` (required): The name of the project
 - `notes` (optional): Project description or notes
 - `area` (optional): Area to assign the project to
-- `due_date` (optional): Project due date in YYYY-MM-DD format
+- `due_date` (optional): When to work on project
+- `deadline` (optional): Project final deadline
 - `tags` (optional): Array of tag names
 
 #### `create_area`
@@ -77,27 +74,60 @@ Create a new area for organizing projects and tasks.
 - `name` (required): The name of the area
 - `tags` (optional): Array of tag names
 
-### Data Retrieval
+### Retrieval Operations
 
 #### `get_todos`
-Retrieve to-do items from specific lists.
+Retrieve to-do items with advanced filtering.
 
 **Parameters:**
-- `list` (required): One of "inbox", "today", "upcoming", "anytime", "someday"
-- `completed` (optional): Include completed to-dos (default: false)
-- `limit` (optional): Maximum number of items to return (default: 50)
+- `list` (optional): "inbox", "today", "upcoming", "anytime", "someday", "all" (default: "all")
+- `status` (optional): "open", "completed", "canceled" (default: "open")
+- `limit` (optional): Maximum items to return (1-1000, default: 50)
 
 #### `get_projects`
-Get projects from Things.
+Get projects with filtering options.
 
 **Parameters:**
 - `area` (optional): Filter projects by area name
-- `completed` (optional): Include completed projects (default: false)
+- `status` (optional): "open", "completed", "canceled" (default: "open")
+- `limit` (optional): Maximum items to return (1-1000, default: 50)
 
 #### `get_areas`
 Get all areas from Things. No parameters required.
 
-### Task Management
+#### `get_upcoming_todos`
+Get upcoming todos within a specified timeframe.
+
+**Parameters:**
+- `days` (optional): Number of days ahead to look (default: 7)
+- `completed` (optional): Include completed todos (default: false)
+- `limit` (optional): Maximum items to return (default: 50)
+
+### Search Operations
+
+#### `search_items`
+Search for items across your Things database.
+
+**Parameters:**
+- `query` (required): Search query text
+- `type` (optional): "all", "todo", "project", "area" (default: "all")
+
+### Update Operations
+
+#### `update_todo`
+Update an existing to-do item.
+
+**Parameters:**
+- `name` (required): Current name of the to-do to update
+- `new_name` (optional): New name for the to-do
+- `notes` (optional): New notes for the to-do
+- `due_date` (optional): New due date
+- `deadline` (optional): New deadline
+- `project` (optional): Move to this project
+- `area` (optional): Move to this area
+- `tags` (optional): Set new tags (replaces existing)
+
+### Status Management
 
 #### `complete_todo`
 Mark a to-do as completed.
@@ -105,29 +135,41 @@ Mark a to-do as completed.
 **Parameters:**
 - `name` (required): The name of the to-do to complete
 
-#### `show_item`
-Show a specific item in Things.
+#### `cancel_todo`
+Cancel a to-do item.
 
 **Parameters:**
-- `name` (required): The name of the item to show
-- `type` (required): Type of item ("todo", "project", or "area")
+- `name` (required): The name of the to-do to cancel
 
-#### `show_quick_entry`
-Open Things Quick Entry panel.
-
-**Parameters:**
-- `text` (optional): Text to pre-fill in the quick entry
-
-#### `search_items`
-Search for items in Things.
+#### `cancel_project`
+Cancel a project.
 
 **Parameters:**
-- `query` (required): Search query text
-- `type` (optional): Item type to search ("all", "todo", "project", "area", default: "all")
+- `name` (required): The name of the project to cancel
+
+### Delete Operations
+
+#### `delete_todo`
+Permanently delete a to-do item.
+
+**Parameters:**
+- `name` (required): The name of the to-do to delete
+
+#### `delete_project`
+Permanently delete a project.
+
+**Parameters:**
+- `name` (required): The name of the project to delete
+
+#### `delete_area`
+Permanently delete an area.
+
+**Parameters:**
+- `name` (required): The name of the area to delete
 
 ## Usage Examples
 
-### Creating a Task
+### Creating and Managing Tasks
 ```
 Create a task called "Prepare presentation" with notes "Include Q3 metrics and future roadmap" due tomorrow in my Work project with tags "urgent" and "presentation"
 ```
@@ -139,21 +181,38 @@ Show me all my tasks for today and help me prioritize them
 
 ### Project Management
 ```
-Create a new project called "Website Redesign" in my "Product Development" area with a due date of March 15th
+Create a new project called "Website Redesign" in my "Product Development" area with a deadline of March 15th
 ```
 
-### Quick Task Entry
+### Updating Tasks
 ```
-Open Things Quick Entry with "Call dentist to schedule appointment"
+Update my task "Review proposal" to move it to the "Client Work" project and change the due date to next Friday
+```
+
+### Advanced Search and Filtering
+```
+Search for all tasks containing "meeting" and show me upcoming tasks for the next 3 days
+```
+
+### Task Lifecycle Management
+```
+Complete the task "Submit quarterly report" and cancel the project "Outdated Initiative"
+```
+
+### Bulk Operations
+```
+Show me all completed tasks from last week and help me archive the related projects
 ```
 
 ## Security Features
 
-- **Input Validation**: All inputs are validated for type, length, and content
-- **AppleScript Injection Protection**: Special characters are escaped to prevent code injection
-- **Error Handling**: Comprehensive error handling with detailed logging
-- **Timeout Management**: AppleScript execution timeouts prevent hanging
-- **Safe Execution**: Use of secure command execution methods
+- **Comprehensive Input Validation**: All inputs validated for type, length, and content with strict limits
+- **AppleScript Injection Protection**: Advanced sanitization prevents code injection attacks
+- **Error Handling**: Robust error handling with structured responses and detailed logging
+- **Timeout Management**: AppleScript execution timeouts prevent hanging operations
+- **Safe Execution**: Secure command execution with process isolation
+- **Data Integrity**: Validation ensures data consistency across all operations
+- **Parameter Limits**: Enforced limits on array sizes, string lengths, and object counts
 
 ## Troubleshooting
 
@@ -172,7 +231,7 @@ If you encounter AppleScript permission errors:
 ### Debug Mode
 Enable debug logging by setting the DEBUG environment variable:
 ```bash
-DEBUG=true node src/index.js
+DEBUG=true node server/index.js
 ```
 
 ## Development
@@ -180,12 +239,14 @@ DEBUG=true node src/index.js
 ### Project Structure
 ```
 things-dxt/
-├── manifest.json          # DXT extension manifest
-├── package.json           # Node.js dependencies
-├── README.md             # This documentation
-├── src/
-│   ├── index.js          # Main MCP server implementation
-│   └── utils.js          # Validation and security utilities
+├── manifest.json                    # DXT extension manifest
+├── package.json                     # Node.js dependencies
+├── README.md                       # This documentation
+├── server/
+│   ├── index.js                    # Main MCP server implementation
+│   ├── utils.js                    # Validation and security utilities
+│   ├── applescript-templates.js    # AppleScript generation templates
+│   └── data-parser.js              # Response parsing and formatting
 ```
 
 ### Testing
@@ -195,10 +256,12 @@ To test the extension locally:
 3. Validate JSON responses match expected schemas
 
 ### Contributing
-1. Ensure all new features include proper input validation
-2. Add comprehensive error handling
+1. Ensure all new features include proper input validation and security measures
+2. Add comprehensive error handling with structured responses
 3. Update documentation for new tools or parameters
-4. Test thoroughly with Things 3 on macOS
+4. Test thoroughly with Things 3 on macOS across different scenarios
+5. Follow the established patterns for AppleScript templates and data parsing
+6. Maintain backward compatibility when possible
 
 ## License
 
