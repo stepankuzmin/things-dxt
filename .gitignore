@@ -60,3 +60,6 @@ Thumbs.db
 
 # DXT package files
 *.dxt
+
+# .claude directory
+.claude/
