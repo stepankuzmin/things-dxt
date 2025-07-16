@@ -497,7 +497,19 @@ export class AppleScriptTemplates {
         set output to output & "todo" & tab & (id of t) & tab & (name of t) & tab
         
         try
-          set output to output & (notes of t) & tab
+          set noteText to notes of t
+          -- Simple replacement of line breaks with spaces
+          set originalDelimiter to AppleScript's text item delimiters
+          set AppleScript's text item delimiters to return
+          set noteItems to text items of noteText
+          set AppleScript's text item delimiters to " "
+          set noteText to noteItems as string
+          set AppleScript's text item delimiters to linefeed
+          set noteItems to text items of noteText
+          set AppleScript's text item delimiters to " "
+          set noteText to noteItems as string
+          set AppleScript's text item delimiters to originalDelimiter
+          set output to output & noteText & tab
         on error
           set output to output & tab
         end try
@@ -555,7 +567,11 @@ export class AppleScriptTemplates {
         set output to output & "project" & tab & (id of p) & tab & (name of p) & tab
         
         try
-          set output to output & (notes of p) & tab
+          set noteText to notes of p
+          -- Replace line breaks with space to prevent parsing issues
+          set noteText to my replaceText(noteText, return, " ")
+          set noteText to my replaceText(noteText, linefeed, " ")
+          set output to output & noteText & tab
         on error
           set output to output & tab
         end try
@@ -588,6 +604,15 @@ export class AppleScriptTemplates {
         set output to output & linefeed
       end repeat
       return output
+      
+      on replaceText(theText, searchString, replacementString)
+        set AppleScript's text item delimiters to searchString
+        set theTextItems to text items of theText
+        set AppleScript's text item delimiters to replacementString
+        set theText to theTextItems as string
+        set AppleScript's text item delimiters to ""
+        return theText
+      end replaceText
     end tell`;
   }
 
@@ -616,7 +641,7 @@ export class AppleScriptTemplates {
       set time of today to 0
       set futureDate to today + (${days} * days)
       
-      set todoList to to dos whose due date ≥ today and due date ≤ futureDate${completedFilter}
+      set todoList to to dos whose activation date is not missing value and activation date ≥ today and activation date ≤ futureDate${completedFilter}
       set output to ""
       repeat with t in todoList
         set output to output & (id of t) & tab & (name of t) & tab
