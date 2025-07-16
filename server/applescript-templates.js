@@ -634,14 +634,23 @@ export class AppleScriptTemplates {
    * Get upcoming todos with date filtering
    */
   static getUpcomingTodos(days = 7, includeCompleted = false) {
-    const completedFilter = includeCompleted ? '' : ' and status is not completed';
+    const completedFilter = includeCompleted ? '' : ' whose status is not completed';
     
     return `tell application "Things3"
       set today to (current date)
       set time of today to 0
       set futureDate to today + (${days} * days)
       
-      set todoList to to dos whose activation date is not missing value and activation date ≥ today and activation date ≤ futureDate${completedFilter}
+      set allTodos to to dos${completedFilter}
+      set todoList to {}
+      repeat with t in allTodos
+        try
+          set activationDate to activation date of t
+          if activationDate is not missing value and activationDate ≥ today and activationDate ≤ futureDate then
+            set end of todoList to t
+          end if
+        end try
+      end repeat
       set output to ""
       repeat with t in todoList
         set output to output & (id of t) & tab & (name of t) & tab
