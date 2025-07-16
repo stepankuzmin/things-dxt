@@ -21,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { ThingsValidator, AppleScriptSanitizer, ThingsLogger, DateConverter, ParameterBuilder, ParameterMapper } from "./utils.js";
+import { ThingsValidator, AppleScriptSanitizer, ThingsLogger, DateConverter, ParameterBuilder, ParameterMapper, StatusValidator } from "./utils.js";
 import { AppleScriptTemplates } from "./applescript-templates.js";
 import { DataParser } from "./data-parser.js";
 
@@ -253,49 +253,6 @@ class ThingsExtension {
             },
           },
           {
-            name: "get_todos",
-            description: "Get to-do items from Things",
-            inputSchema: {
-              type: "object",
-              properties: {
-                list: {
-                  type: "string",
-                  enum: ["inbox", "today", "upcoming", "anytime", "someday"],
-                  description: "Which list to get to-dos from",
-                },
-                completed: {
-                  type: "boolean",
-                  description: "Whether to include completed to-dos",
-                  default: false,
-                },
-                limit: {
-                  type: "number",
-                  description: "Maximum number of to-dos to return",
-                  default: 50,
-                },
-              },
-              required: ["list"],
-            },
-          },
-          {
-            name: "get_projects",
-            description: "Get projects from Things",
-            inputSchema: {
-              type: "object",
-              properties: {
-                area: {
-                  type: "string",
-                  description: "Optional area name to filter projects",
-                },
-                completed: {
-                  type: "boolean",
-                  description: "Whether to include completed projects",
-                  default: false,
-                },
-              },
-            },
-          },
-          {
             name: "get_areas",
             description: "Get areas from Things",
             inputSchema: {
@@ -404,6 +361,126 @@ class ThingsExtension {
               required: ["name"],
             },
           },
+          {
+            name: "cancel_todo",
+            description: "Cancel a to-do item in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The name of the to-do to cancel",
+                },
+              },
+              required: ["name"],
+            },
+          },
+          {
+            name: "cancel_project",
+            description: "Cancel a project in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The name of the project to cancel",
+                },
+              },
+              required: ["name"],
+            },
+          },
+          {
+            name: "delete_todo",
+            description: "Delete a to-do item in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The name of the to-do to delete",
+                },
+              },
+              required: ["name"],
+            },
+          },
+          {
+            name: "delete_project",
+            description: "Delete a project in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The name of the project to delete",
+                },
+              },
+              required: ["name"],
+            },
+          },
+          {
+            name: "delete_area",
+            description: "Delete an area in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The name of the area to delete",
+                },
+              },
+              required: ["name"],
+            },
+          },
+          {
+            name: "get_todos",
+            description: "Get to-do items from Things with flexible filtering",
+            inputSchema: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["open", "completed", "canceled"],
+                  description: "Status filter for todos",
+                  default: "open",
+                },
+                list: {
+                  type: "string",
+                  enum: ["inbox", "today", "upcoming", "anytime", "someday", "all"],
+                  description: "Which list to get to-dos from",
+                  default: "all",
+                },
+                limit: {
+                  type: "number",
+                  description: "Maximum number of to-dos to return",
+                  default: 50,
+                },
+              },
+            },
+          },
+          {
+            name: "get_projects",
+            description: "Get projects from Things with flexible filtering",
+            inputSchema: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["open", "completed", "canceled"],
+                  description: "Status filter for projects",
+                  default: "open",
+                },
+                area: {
+                  type: "string",
+                  description: "Optional area name to filter projects",
+                },
+                limit: {
+                  type: "number",
+                  description: "Maximum number of projects to return",
+                  default: 50,
+                },
+              },
+            },
+          },
         ],
       };
     });
@@ -421,10 +498,6 @@ class ThingsExtension {
             return await this.createProject(args);
           case "create_area":
             return await this.createArea(args);
-          case "get_todos":
-            return await this.getTodos(args);
-          case "get_projects":
-            return await this.getProjects(args);
           case "get_areas":
             return await this.getAreas(args);
           case "complete_todo":
@@ -435,6 +508,20 @@ class ThingsExtension {
             return await this.getUpcomingTodos(args);
           case "update_todo":
             return await this.updateTodo(args);
+          case "cancel_todo":
+            return await this.cancelTodo(args);
+          case "cancel_project":
+            return await this.cancelProject(args);
+          case "delete_todo":
+            return await this.deleteTodo(args);
+          case "delete_project":
+            return await this.deleteProject(args);
+          case "delete_area":
+            return await this.deleteArea(args);
+          case "get_todos":
+            return await this.getTodosByStatus(args);
+          case "get_projects":
+            return await this.getProjectsByStatus(args);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -522,69 +609,6 @@ class ThingsExtension {
     });
   }
 
-  async getTodos(args) {
-    // Validate inputs
-    const validatedLimit = args.limit ? ThingsValidator.validateNumberInput(args.limit, "limit", 1, 1000) : 50;
-    const completed = Boolean(args.completed);
-
-    // Validate list parameter
-    const validLists = ["inbox", "today", "upcoming", "anytime", "someday"];
-    if (!validLists.includes(args.list)) {
-      throw new McpError(ErrorCode.InvalidParams, `Invalid list: ${args.list}. Must be one of: ${validLists.join(', ')}`);
-    }
-
-    ThingsLogger.info("Getting todos", { list: args.list, completed, limit: validatedLimit });
-
-    const script = AppleScriptTemplates.getTodos(args.list, completed);
-    const result = await this.executeAppleScript(script);
-    const todos = DataParser.parseTodos(result);
-    const limitedTodos = todos.slice(0, validatedLimit);
-    
-    ThingsLogger.info("Retrieved todos successfully", { count: limitedTodos.length, total: todos.length });
-    
-    return DataParser.createSuccessResponse({
-      success: true,
-      list: args.list,
-      completed_included: completed,
-      count: limitedTodos.length,
-      total_count: todos.length,
-      todos: limitedTodos,
-    });
-  }
-
-  async getProjects(args) {
-    // Validate inputs
-    const validatedArea = args.area ? ThingsValidator.validateStringInput(args.area, "area") : null;
-    const completed = Boolean(args.completed);
-
-    ThingsLogger.info("Getting projects", { area: validatedArea, completed });
-
-    const script = AppleScriptTemplates.getProjects(validatedArea, completed);
-    const result = await this.executeAppleScript(script);
-    const projects = DataParser.parseProjects(result);
-    
-    // Log a warning if no projects found and area was specified (might not exist)
-    if (projects.length === 0 && validatedArea) {
-      ThingsLogger.warn("No projects found for specified area", { 
-        area: validatedArea, 
-        message: "Area may not exist in Things 3" 
-      });
-    }
-    
-    ThingsLogger.info("Retrieved projects successfully", { 
-      count: projects.length, 
-      area: validatedArea,
-      completed: completed 
-    });
-    
-    return DataParser.createSuccessResponse({
-      success: true,
-      area: validatedArea || "all",
-      completed_included: completed,
-      count: projects.length,
-      projects: projects,
-    });
-  }
 
   async getAreas(args) {
     ThingsLogger.info("Getting areas");
@@ -603,31 +627,7 @@ class ThingsExtension {
   }
 
   async completeTodo(args) {
-    // Validate input
-    const validatedName = ThingsValidator.validateStringInput(args.name, "name");
-
-    ThingsLogger.info("Completing todo", { name: validatedName });
-
-    const scriptTemplate = AppleScriptTemplates.completeTodo(validatedName);
-    const script = AppleScriptSanitizer.buildScript(scriptTemplate, { name: validatedName });
-    const result = await this.executeAppleScript(script);
-    
-    if (result.trim() === "not_found") {
-      ThingsLogger.warn("Todo not found for completion", { name: validatedName });
-      
-      return DataParser.createSuccessResponse({
-        success: false,
-        message: `To-do not found: ${validatedName}`,
-        error: "TODO_NOT_FOUND"
-      });
-    }
-    
-    ThingsLogger.info("Todo completed successfully", { name: validatedName });
-    
-    return DataParser.createSuccessResponse({
-      success: true,
-      message: `Completed to-do: ${validatedName}`,
-    });
+    return await this.changeItemStatus(args, "to-do", "completed", "Completed");
   }
 
   async searchItems(args) {
@@ -735,6 +735,139 @@ class ThingsExtension {
     return DataParser.createSuccessResponse({
       success: true,
       message: `Updated to-do: ${scriptParams.name}`,
+    });
+  }
+
+  /**
+   * Generic status change operation for todos and projects
+   */
+  async changeItemStatus(args, itemType, newStatus, operation) {
+    const validatedName = ThingsValidator.validateStringInput(args.name, "name");
+
+    ThingsLogger.info(`${operation} ${itemType}`, { name: validatedName });
+
+    const scriptTemplate = AppleScriptTemplates.changeItemStatus(itemType, newStatus);
+    const script = AppleScriptSanitizer.buildScript(scriptTemplate, { name: validatedName });
+    const result = await this.executeAppleScript(script);
+    
+    if (result.trim() === "not_found") {
+      const errorType = itemType.toUpperCase() + "_NOT_FOUND";
+      ThingsLogger.warn(`${itemType} not found for ${operation.toLowerCase()}`, { name: validatedName });
+      
+      return DataParser.createSuccessResponse({
+        success: false,
+        message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} not found: ${validatedName}`,
+        error: errorType
+      });
+    }
+    
+    ThingsLogger.info(`${itemType} ${operation.toLowerCase()} successfully`, { name: validatedName });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      message: `${operation} ${itemType}: ${validatedName}`,
+    });
+  }
+
+  async cancelTodo(args) {
+    return await this.changeItemStatus(args, "to-do", "canceled", "Canceled");
+  }
+
+  async cancelProject(args) {
+    return await this.changeItemStatus(args, "project", "canceled", "Canceled");
+  }
+
+  /**
+   * Generic delete operation for todos, projects, and areas
+   */
+  async deleteItem(args, itemType, displayName) {
+    const validatedName = ThingsValidator.validateStringInput(args.name, "name");
+
+    ThingsLogger.info(`Deleting ${displayName}`, { name: validatedName });
+
+    const scriptTemplate = AppleScriptTemplates.deleteItem(itemType);
+    const script = AppleScriptSanitizer.buildScript(scriptTemplate, { name: validatedName });
+    const result = await this.executeAppleScript(script);
+    
+    if (result.trim() === "not_found") {
+      const errorType = itemType.toUpperCase().replace("-", "_") + "_NOT_FOUND";
+      ThingsLogger.warn(`${displayName} not found for deletion`, { name: validatedName });
+      
+      return DataParser.createSuccessResponse({
+        success: false,
+        message: `${displayName.charAt(0).toUpperCase() + displayName.slice(1)} not found: ${validatedName}`,
+        error: errorType
+      });
+    }
+    
+    ThingsLogger.info(`${displayName} deleted successfully`, { name: validatedName });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      message: `Deleted ${displayName}: ${validatedName}`,
+    });
+  }
+
+  async deleteTodo(args) {
+    return await this.deleteItem(args, "to-do", "to-do");
+  }
+
+  async deleteProject(args) {
+    return await this.deleteItem(args, "project", "project");
+  }
+
+  async deleteArea(args) {
+    return await this.deleteItem(args, "area", "area");
+  }
+
+  async getTodosByStatus(args) {
+    const validatedLimit = args.limit ? ThingsValidator.validateNumberInput(args.limit, "limit", 1, 1000) : 50;
+    const list = args.list || "all";
+    const status = args.status || "open";
+    const validatedStatus = StatusValidator.validateStatus(status);
+    const validatedList = StatusValidator.validateList(list);
+
+    ThingsLogger.info("Getting todos by status", { status: validatedStatus, list: validatedList, limit: validatedLimit });
+
+    const script = AppleScriptTemplates.getItemsByStatus("todos", validatedStatus, validatedList);
+    const result = await this.executeAppleScript(script);
+    const todos = DataParser.parseTodos(result);
+    const limitedTodos = todos.slice(0, validatedLimit);
+    
+    ThingsLogger.info("Retrieved todos by status successfully", { count: limitedTodos.length, total: todos.length });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      status: validatedStatus,
+      list: validatedList,
+      count: limitedTodos.length,
+      total_count: todos.length,
+      todos: limitedTodos,
+    });
+  }
+
+  async getProjectsByStatus(args) {
+    const validatedLimit = args.limit ? ThingsValidator.validateNumberInput(args.limit, "limit", 1, 1000) : 50;
+    const validatedArea = args.area ? ThingsValidator.validateStringInput(args.area, "area") : null;
+    const status = args.status || "open";
+    const validatedStatus = StatusValidator.validateStatus(status);
+
+    ThingsLogger.info("Getting projects by status", { status: validatedStatus, area: validatedArea, limit: validatedLimit });
+
+    const script = AppleScriptTemplates.getItemsByStatus("projects", validatedStatus, null, validatedArea);
+    const result = await this.executeAppleScript(script);
+    const projects = DataParser.parseProjects(result);
+    const limitedProjects = projects.slice(0, validatedLimit);
+    
+    ThingsLogger.info("Retrieved projects by status successfully", { count: limitedProjects.length, total: projects.length });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      status: validatedStatus,
+      area: validatedArea || "all",
+      count: limitedProjects.length,
+      total_count: projects.length,
+      projects: limitedProjects,
     });
   }
 

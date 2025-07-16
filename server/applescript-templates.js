@@ -151,214 +151,7 @@ export class AppleScriptTemplates {
     return script;
   }
 
-  /**
-   * Get todos from a specific list
-   */
-  static getTodos(listName, includeCompleted = false) {
-    const completedFilter = includeCompleted ? '' : ' whose status is not completed';
-    
-    return `tell application "Things3"
-      set todoList to to dos of list "${listName}"${completedFilter}
-      set output to ""
-      repeat with t in todoList
-        set output to output & (id of t) & tab & (name of t) & tab
-        
-        -- Get notes (handle missing value)
-        try
-          set output to output & (notes of t) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get due date (handle missing value)
-        try
-          set output to output & (due date of t as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get activation date (handle missing value)
-        try
-          set output to output & (activation date of t as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get status
-        set output to output & (status of t as string) & tab
-        
-        -- Get creation date
-        try
-          set output to output & (creation date of t as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get modification date
-        try
-          set output to output & (modification date of t as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get completion date
-        try
-          set output to output & (completion date of t as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get project name
-        try
-          set parentProject to project of t
-          if parentProject is not missing value then
-            set output to output & (name of parentProject) & tab
-          else
-            set output to output & tab
-          end if
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get area name
-        try
-          set parentArea to area of t
-          if parentArea is not missing value then
-            set output to output & (name of parentArea) & tab
-          else
-            set output to output & tab
-          end if
-        on error
-          set output to output & tab
-        end try
-        
-        -- Get tags (as comma-separated string)
-        try
-          set tagList to tag names of t
-          set tagString to ""
-          repeat with i from 1 to count of tagList
-            set tagString to tagString & (item i of tagList)
-            if i < count of tagList then set tagString to tagString & ","
-          end repeat
-          set output to output & tagString
-        on error
-          set output to output & ""
-        end try
-        
-        set output to output & linefeed
-      end repeat
-      return output
-    end tell`;
-  }
 
-  /**
-   * Get projects
-   */
-  static getProjects(area = null, includeCompleted = false) {
-    let script;
-    
-    if (area && !includeCompleted) {
-      // Need to filter both by area and completion status
-      script = `tell application "Things3"
-        try
-          set targetArea to area "${area}"
-          set allProjects to projects of targetArea
-          set projectList to {}
-          repeat with p in allProjects
-            if status of p is not completed then
-              set end of projectList to p
-            end if
-          end repeat
-        on error
-          set projectList to {}
-        end try`;
-    } else if (area) {
-      // Filter by area only
-      script = `tell application "Things3"
-        try
-          set targetArea to area "${area}"
-          set projectList to projects of targetArea
-        on error
-          set projectList to {}
-        end try`;
-    } else if (!includeCompleted) {
-      // Filter by completion status only
-      script = `tell application "Things3"
-        set projectList to projects whose status is not completed`;
-    } else {
-      // No filtering
-      script = `tell application "Things3"
-        set projectList to projects`;
-    }
-    
-    script += `
-      set output to ""
-      repeat with p in projectList
-        set output to output & (id of p) & tab & (name of p) & tab
-        
-        try
-          set output to output & (notes of p) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        try
-          set output to output & (due date of p as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        try
-          set output to output & (activation date of p as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        set output to output & (status of p as string) & tab
-        
-        try
-          set output to output & (creation date of p as string) & tab
-        on error
-          set output to output & tab
-        end try
-        
-        try
-          set parentArea to area of p
-          if parentArea is not missing value then
-            set output to output & (name of parentArea) & tab
-          else
-            set output to output & tab
-          end if
-        on error
-          set output to output & tab
-        end try
-        
-        try
-          set todoCount to count of to dos of p
-          set output to output & todoCount & tab
-        on error
-          set output to output & "0" & tab
-        end try
-        
-        try
-          set tagList to tag names of p
-          set tagString to ""
-          repeat with i from 1 to count of tagList
-            set tagString to tagString & (item i of tagList)
-            if i < count of tagList then set tagString to tagString & ","
-          end repeat
-          set output to output & tagString
-        on error
-          set output to output & ""
-        end try
-        
-        set output to output & linefeed
-      end repeat
-      return output
-    end tell`;
-    
-    return script;
-  }
 
   /**
    * Get areas
@@ -475,19 +268,222 @@ export class AppleScriptTemplates {
     return script;
   }
 
+
   /**
-   * Complete a todo by name
+   * Change status of an item (todo or project)
    */
-  static completeTodo(name) {
+  static changeItemStatus(itemType, newStatus) {
+    const itemSelector = itemType === "to-do" ? "to do" : itemType;
+    
     return `tell application "Things3"
       try
-        set targetTodo to first to do whose name is "{{name}}"
-        set status of targetTodo to completed
-        return "completed"
+        set targetItem to first ${itemSelector} whose name is "{{name}}"
+        set status of targetItem to ${newStatus}
+        return "${newStatus}"
       on error
         return "not_found"
       end try
     end tell`;
+  }
+
+  /**
+   * Delete an item by name (todo, project, or area)
+   */
+  static deleteItem(itemType) {
+    const itemSelector = itemType === "to-do" ? "to do" : itemType;
+    
+    return `tell application "Things3"
+      try
+        set targetItem to first ${itemSelector} whose name is "{{name}}"
+        delete targetItem
+        return "deleted"
+      on error
+        return "not_found"
+      end try
+    end tell`;
+  }
+
+  /**
+   * Delete an area by name (legacy - use deleteItem instead)
+   */
+  static deleteArea(name) {
+    return this.deleteItem("area");
+  }
+
+  /**
+   * Generic function to get items by status (todos or projects)
+   */
+  static getItemsByStatus(itemType, status, listName = null, areaName = null) {
+    const statusFilter = this.getStatusFilter(status);
+    
+    let itemSelector;
+    if (itemType === "todos") {
+      itemSelector = listName && listName !== "all" ? `to dos of list "${listName}"` : "to dos";
+    } else {
+      itemSelector = areaName ? `projects of area "${areaName}"` : "projects";
+    }
+    
+    const isProject = itemType === "projects";
+    const itemVar = isProject ? "p" : "t";
+    
+    return `tell application "Things3"
+      try
+        set itemList to ${itemSelector} whose ${statusFilter}
+      on error
+        set itemList to {}
+      end try
+      
+      set output to ""
+      repeat with ${itemVar} in itemList
+        set output to output & (id of ${itemVar}) & tab & (name of ${itemVar}) & tab
+        
+        -- Get notes (handle missing value)
+        try
+          set output to output & (notes of ${itemVar}) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get due date (handle missing value)
+        try
+          set output to output & (due date of ${itemVar} as string) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get activation date (handle missing value)
+        try
+          set output to output & (activation date of ${itemVar} as string) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get status
+        set output to output & (status of ${itemVar} as string) & tab
+        
+        -- Get creation date
+        try
+          set output to output & (creation date of ${itemVar} as string) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get modification date
+        try
+          set output to output & (modification date of ${itemVar} as string) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get completion date
+        try
+          set output to output & (completion date of ${itemVar} as string) & tab
+        on error
+          set output to output & tab
+        end try
+        
+        ${isProject ? this.getProjectSpecificFields(itemVar) : this.getTodoSpecificFields(itemVar)}
+        
+        set output to output & linefeed
+      end repeat
+      return output
+    end tell`;
+  }
+
+  /**
+   * Get status filter for AppleScript
+   */
+  static getStatusFilter(status) {
+    switch(status) {
+      case "open":
+        return "status is open";
+      case "completed":
+        return "status is completed";
+      case "canceled":
+        return "status is canceled";
+      default:
+        return "status is open";
+    }
+  }
+
+  /**
+   * Get project-specific fields for AppleScript output
+   */
+  static getProjectSpecificFields(itemVar) {
+    return `-- Get area name
+        try
+          set parentArea to area of ${itemVar}
+          if parentArea is not missing value then
+            set output to output & (name of parentArea) & tab
+          else
+            set output to output & tab
+          end if
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get todo count
+        try
+          set todoCount to count of to dos of ${itemVar}
+          set output to output & todoCount & tab
+        on error
+          set output to output & "0" & tab
+        end try
+        
+        -- Get tags (as comma-separated string)
+        try
+          set tagList to tag names of ${itemVar}
+          set tagString to ""
+          repeat with i from 1 to count of tagList
+            set tagString to tagString & (item i of tagList)
+            if i < count of tagList then set tagString to tagString & ","
+          end repeat
+          set output to output & tagString
+        on error
+          set output to output & ""
+        end try`;
+  }
+
+  /**
+   * Get todo-specific fields for AppleScript output
+   */
+  static getTodoSpecificFields(itemVar) {
+    return `-- Get project name
+        try
+          set parentProject to project of ${itemVar}
+          if parentProject is not missing value then
+            set output to output & (name of parentProject) & tab
+          else
+            set output to output & tab
+          end if
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get area name
+        try
+          set parentArea to area of ${itemVar}
+          if parentArea is not missing value then
+            set output to output & (name of parentArea) & tab
+          else
+            set output to output & tab
+          end if
+        on error
+          set output to output & tab
+        end try
+        
+        -- Get tags (as comma-separated string)
+        try
+          set tagList to tag names of ${itemVar}
+          set tagString to ""
+          repeat with i from 1 to count of tagList
+            set tagString to tagString & (item i of tagList)
+            if i < count of tagList then set tagString to tagString & ","
+          end repeat
+          set output to output & tagString
+        on error
+          set output to output & ""
+        end try`;
   }
 
   /**

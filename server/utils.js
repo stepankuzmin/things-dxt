@@ -149,6 +149,56 @@ export class DateConverter {
   }
 }
 
+export class StatusValidator {
+  /**
+   * Valid status values for Things 3 items
+   */
+  static VALID_STATUSES = ["open", "completed", "canceled"];
+  static VALID_LISTS = ["inbox", "today", "upcoming", "anytime", "someday", "all"];
+
+  /**
+   * Validate status parameter
+   */
+  static validateStatus(status, fieldName = "status") {
+    if (!this.VALID_STATUSES.includes(status)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid ${fieldName}: ${status}. Must be one of: ${this.VALID_STATUSES.join(', ')}`
+      );
+    }
+    return status;
+  }
+
+  /**
+   * Validate list parameter
+   */
+  static validateList(list, fieldName = "list") {
+    if (!this.VALID_LISTS.includes(list)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid ${fieldName}: ${list}. Must be one of: ${this.VALID_LISTS.join(', ')}`
+      );
+    }
+    return list;
+  }
+
+  /**
+   * Convert status to AppleScript filter
+   */
+  static statusToFilter(status) {
+    switch(status) {
+      case "open":
+        return "status is open";
+      case "completed":
+        return "status is completed";
+      case "canceled":
+        return "status is canceled";
+      default:
+        return "status is open";
+    }
+  }
+}
+
 export class ParameterMapper {
   /**
    * Validate and map user-friendly parameters to internal parameters
