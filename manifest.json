@@ -1,0 +1,83 @@
+{
+  "dxt_version": "0.1",
+  "name": "things-dxt",
+  "display_name": "Things Task Manager",
+  "version": "1.0.0",
+  "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
+  "long_description": "This extension provides seamless integration between Claude Desktop and Things task manager through AppleScript automation. Create, manage, and organize your tasks directly from Claude conversations. Features include creating to-dos, projects, areas, tags, and managing your task workflow efficiently.",
+  "author": {
+    "name": "Claude Desktop Extension",
+    "email": "extensions@anthropic.com"
+  },
+  "license": "MIT",
+  "keywords": ["tasks", "productivity", "things", "todo", "project management", "applescript"],
+  "compatibility": {
+    "platforms": ["darwin"],
+    "min_claude_desktop_version": "0.1.0"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "DEBUG": "false"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "create_todo",
+      "description": "Create a new to-do item in Things"
+    },
+    {
+      "name": "create_project",
+      "description": "Create a new project in Things"
+    },
+    {
+      "name": "create_area",
+      "description": "Create a new area in Things"
+    },
+    {
+      "name": "get_todos",
+      "description": "Get to-do items from Things"
+    },
+    {
+      "name": "get_projects",
+      "description": "Get projects from Things"
+    },
+    {
+      "name": "get_areas",
+      "description": "Get areas from Things"
+    },
+    {
+      "name": "complete_todo",
+      "description": "Mark a to-do as completed in Things"
+    },
+    {
+      "name": "show_quick_entry",
+      "description": "Show Things Quick Entry panel"
+    },
+    {
+      "name": "show_item",
+      "description": "Show a specific item in Things"
+    },
+    {
+      "name": "search_items",
+      "description": "Search for items in Things"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "plan_day",
+      "description": "Help plan your day with Things tasks",
+      "text": "Help me plan my day by reviewing my current tasks in Things. Show me what's on my today list, upcoming tasks, and suggest a prioritized plan for the day."
+    },
+    {
+      "name": "review_tasks",
+      "description": "Review and organize current tasks",
+      "text": "Let's review and organize my current tasks in Things. Show me my inbox, overdue items, and help me organize them into appropriate projects and areas."
+    }
+  ]
+}
