@@ -1,3 +1,13 @@
+/**
+ * Utility classes for Things 3 MCP Server
+ * 
+ * Key Design Decisions:
+ * - User-friendly parameter mapping: due_date (user) -> activation_date (Things), deadline (user) -> due_date (Things)
+ * - Centralized validation and mapping via ParameterMapper
+ * - Consistent error handling and logging patterns
+ * - Clean separation of concerns between validation, scripting, and data parsing
+ */
+
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 
 export class ThingsValidator {
@@ -139,11 +149,40 @@ export class DateConverter {
   }
 }
 
+export class ParameterMapper {
+  /**
+   * Validate and map user-friendly parameters to internal parameters
+   * Maps: due_date (user) -> activation_date (internal), deadline (user) -> due_date (internal)
+   */
+  static validateAndMapParameters(args, additionalFields = {}) {
+    const result = {
+      name: args.name ? ThingsValidator.validateStringInput(args.name, "name") : null,
+      new_name: args.new_name ? ThingsValidator.validateStringInput(args.new_name, "new_name") : null,
+      notes: args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null,
+      
+      // Map user-friendly parameters to internal parameters
+      // due_date (user) -> activation_date (internal) 
+      // deadline (user) -> due_date (internal)
+      activation_date: args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null,
+      due_date: args.deadline ? ThingsValidator.validateDateInput(args.deadline, "deadline") : null,
+      
+      project: args.project ? ThingsValidator.validateStringInput(args.project, "project") : null,
+      area: args.area ? ThingsValidator.validateStringInput(args.area, "area") : null,
+      tags: args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : null,
+      
+      ...additionalFields
+    };
+    
+    // Remove null values to keep the object clean
+    return Object.fromEntries(Object.entries(result).filter(([_, v]) => v !== null));
+  }
+}
+
 export class ParameterBuilder {
   /**
    * Build AppleScript parameters with tags and optional date formatting
    */
-  static buildParameters(baseParams, tags = null, dueDate = null) {
+  static buildParameters(baseParams, tags = null, dueDate = null, activationDate = null) {
     const buildParams = { ...baseParams };
     
     // Add individual tag parameters
@@ -153,7 +192,7 @@ export class ParameterBuilder {
       });
     }
     
-    // Add formatted date parameter
+    // Add formatted due date parameter
     if (dueDate) {
       try {
         buildParams.due_date_formatted = DateConverter.toAppleScriptDate(dueDate);
@@ -161,6 +200,18 @@ export class ParameterBuilder {
         throw new McpError(
           ErrorCode.InvalidParams,
           `Invalid due date: ${error.message}`
+        );
+      }
+    }
+    
+    // Add formatted activation date parameter
+    if (activationDate) {
+      try {
+        buildParams.activation_date_formatted = DateConverter.toAppleScriptDate(activationDate);
+      } catch (error) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `Invalid activation date: ${error.message}`
         );
       }
     }
@@ -230,6 +281,26 @@ export class ThingsLogger {
   static debug(message, data) {
     if (process.env.DEBUG === 'true') {
       this.log('debug', message, data);
+    }
+  }
+  
+  /**
+   * Log warnings for project/area assignments that might not exist
+   */
+  static logAssignmentWarnings(scriptParams, operation = "created") {
+    if (scriptParams.project) {
+      this.info(`To-do ${operation} with project assignment`, { 
+        name: scriptParams.name, 
+        project: scriptParams.project,
+        note: "If project doesn't exist, todo will remain in current location"
+      });
+    }
+    if (scriptParams.area) {
+      this.info(`To-do ${operation} with area assignment`, { 
+        name: scriptParams.name, 
+        area: scriptParams.area,
+        note: "If area doesn't exist, todo will remain in current location"
+      });
     }
   }
 }

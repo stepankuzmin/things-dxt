@@ -1,5 +1,13 @@
 /**
- * Helper functions for parsing AppleScript output data
+ * Data Parser for Things 3 AppleScript Output
+ * 
+ * This module handles parsing of tab-separated data returned from AppleScript commands.
+ * Key features:
+ * - Maps internal Things 3 fields to user-friendly response fields
+ * - due_date (internal: activation_date) = when scheduled to work on
+ * - deadline (internal: due_date) = when actually due
+ * - Handles various data types: todos, projects, areas, search results
+ * - Robust parsing with fallback values for missing data
  */
 
 export class DataParser {
@@ -22,14 +30,15 @@ export class DataParser {
           id: parts[0] || '',
           name: parts[1] || '',
           notes: parts[2] || '',
-          due_date: parts[3] || '',
-          status: parts[4] || '',
-          creation_date: parts[5] || '',
-          modification_date: parts[6] || '',
-          completion_date: parts[7] || '',
-          project: parts[8] || '',
-          area: parts[9] || '',
-          tags: parts[10] ? parts[10].split(',') : []
+          deadline: parts[3] || '',  // Internal due_date -> user-friendly deadline
+          due_date: parts[4] || '',  // Internal activation_date -> user-friendly due_date
+          status: parts[5] || '',
+          creation_date: parts[6] || '',
+          modification_date: parts[7] || '',
+          completion_date: parts[8] || '',
+          project: parts[9] || '',
+          area: parts[10] || '',
+          tags: parts[11] ? parts[11].split(',') : []
         };
         todos.push(todo);
       }
@@ -56,12 +65,13 @@ export class DataParser {
           id: parts[0] || '',
           name: parts[1] || '',
           notes: parts[2] || '',
-          due_date: parts[3] || '',
-          status: parts[4] || '',
-          creation_date: parts[5] || '',
-          area: parts[6] || '',
-          todo_count: parseInt(parts[7]) || 0,
-          tags: parts[8] ? parts[8].split(',') : []
+          deadline: parts[3] || '',        // Internal due_date -> user-friendly deadline
+          due_date: parts[4] || '',        // Internal activation_date -> user-friendly due_date
+          status: parts[5] || '',
+          creation_date: parts[6] || '',
+          area: parts[7] || '',
+          todo_count: parseInt(parts[8]) || 0,
+          tags: parts[9] ? parts[9].split(',') : []
         };
         projects.push(project);
       }
@@ -119,10 +129,11 @@ export class DataParser {
             id: parts[1] || '',
             name: parts[2] || '',
             notes: parts[3] || '',
-            due_date: parts[4] || '',
-            status: parts[5] || '',
-            project: parts[6] || '',
-            area: parts[7] || ''
+            deadline: parts[4] || '',     // Internal due_date -> user-friendly deadline
+            due_date: parts[5] || '',     // Internal activation_date -> user-friendly due_date
+            status: parts[6] || '',
+            project: parts[7] || '',
+            area: parts[8] || ''
           });
         } else if (type === 'project' || parts[0] === 'project') {
           results.push({
@@ -130,9 +141,10 @@ export class DataParser {
             id: parts[1] || '',
             name: parts[2] || '',
             notes: parts[3] || '',
-            due_date: parts[4] || '',
-            status: parts[5] || '',
-            area: parts[6] || ''
+            deadline: parts[4] || '',     // Internal due_date -> user-friendly deadline
+            due_date: parts[5] || '',     // Internal activation_date -> user-friendly due_date
+            status: parts[6] || '',
+            area: parts[7] || ''
           });
         } else if (type === 'area' || parts[0] === 'area') {
           results.push({

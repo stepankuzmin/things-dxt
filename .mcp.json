@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "shared-server": {
+            "type": "stdio",
+            "command": "node",
+            "args": [
+                "/Users/matt/Documents/things-dxt/server/index.js"
+            ]
+        }
+    }
+}

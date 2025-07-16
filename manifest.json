@@ -19,10 +19,19 @@
   "support": "https://github.com/mbmccormick/things-dxt/issues",
   "icon": "icon.png",
   "license": "MIT",
-  "keywords": ["tasks", "productivity", "things", "todo", "project management", "applescript"],
+  "keywords": [
+    "tasks",
+    "productivity",
+    "things",
+    "todo",
+    "project management",
+    "applescript"
+  ],
   "compatibility": {
     "claude_desktop": ">=0.10.0",
-    "platforms": ["darwin"],
+    "platforms": [
+      "darwin"
+    ],
     "runtimes": {
       "node": ">=16.0.0"
     }
@@ -33,7 +42,9 @@
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"]
+      "args": [
+        "${__dirname}/server/index.js"
+      ]
     }
   },
   "tools": [

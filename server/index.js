@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 
+/**
+ * Things 3 MCP Server - Main Entry Point
+ * 
+ * This server provides MCP tools for creating, updating, and managing items in Things 3.
+ * Key features:
+ * - User-friendly date parameter mapping (due_date = when to work on, deadline = when actually due)
+ * - Comprehensive CRUD operations for todos, projects, and areas
+ * - Robust error handling and validation
+ * - Centralized parameter mapping and AppleScript execution
+ */
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -10,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { ThingsValidator, AppleScriptSanitizer, ThingsLogger, DateConverter, ParameterBuilder } from "./utils.js";
+import { ThingsValidator, AppleScriptSanitizer, ThingsLogger, DateConverter, ParameterBuilder, ParameterMapper } from "./utils.js";
 import { AppleScriptTemplates } from "./applescript-templates.js";
 import { DataParser } from "./data-parser.js";
 
@@ -36,6 +47,29 @@ class ThingsExtension {
     } catch (error) {
       console.error("Failed to initialize Things MCP server:", error);
       process.exit(1);
+    }
+  }
+
+  /**
+   * Execute AppleScript template with parameters and handle common patterns
+   */
+  async executeThingsScript(template, scriptParams, operationName) {
+    const buildParams = ParameterBuilder.buildParameters(
+      scriptParams, 
+      scriptParams.tags, 
+      scriptParams.due_date, 
+      scriptParams.activation_date
+    );
+    const script = AppleScriptSanitizer.buildScript(template, buildParams);
+    
+    try {
+      return await this.executeAppleScript(script);
+    } catch (error) {
+      ThingsLogger.error(`${operationName} failed`, { 
+        name: scriptParams.name,
+        error: error.message 
+      });
+      throw error;
     }
   }
 
@@ -141,7 +175,11 @@ class ThingsExtension {
                 },
                 due_date: {
                   type: "string",
-                  description: "Optional due date in YYYY-MM-DD format",
+                  description: "Optional due date (when scheduled to work on) in YYYY-MM-DD format",
+                },
+                deadline: {
+                  type: "string",
+                  description: "Optional deadline (when actually due) in YYYY-MM-DD format",
                 },
                 project: {
                   type: "string",
@@ -180,7 +218,11 @@ class ThingsExtension {
                 },
                 due_date: {
                   type: "string",
-                  description: "Optional due date in YYYY-MM-DD format",
+                  description: "Optional due date (when scheduled to work on) in YYYY-MM-DD format",
+                },
+                deadline: {
+                  type: "string",
+                  description: "Optional deadline (when actually due) in YYYY-MM-DD format",
                 },
                 tags: {
                   type: "array",
@@ -295,6 +337,73 @@ class ThingsExtension {
               required: ["query"],
             },
           },
+          {
+            name: "get_upcoming_todos",
+            description: "Get upcoming todos from Things within a specified number of days",
+            inputSchema: {
+              type: "object",
+              properties: {
+                days: {
+                  type: "number",
+                  description: "Number of days ahead to look for upcoming todos",
+                  default: 7,
+                },
+                completed: {
+                  type: "boolean",
+                  description: "Whether to include completed todos",
+                  default: false,
+                },
+                limit: {
+                  type: "number",
+                  description: "Maximum number of todos to return",
+                  default: 50,
+                },
+              },
+            },
+          },
+          {
+            name: "update_todo",
+            description: "Update an existing to-do item in Things",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "The current name of the to-do to update",
+                },
+                new_name: {
+                  type: "string",
+                  description: "Optional new name for the to-do",
+                },
+                notes: {
+                  type: "string",
+                  description: "Optional new notes for the to-do",
+                },
+                due_date: {
+                  type: "string",
+                  description: "Optional due date (when scheduled to work on) in YYYY-MM-DD format",
+                },
+                deadline: {
+                  type: "string",
+                  description: "Optional deadline (when actually due) in YYYY-MM-DD format",
+                },
+                project: {
+                  type: "string",
+                  description: "Optional project name to move the to-do to",
+                },
+                area: {
+                  type: "string",
+                  description: "Optional area name to move the to-do to",
+                },
+                tags: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Optional array of tag names to set",
+                },
+              },
+              required: ["name"],
+            },
+          },
         ],
       };
     });
@@ -322,6 +431,10 @@ class ThingsExtension {
             return await this.completeTodo(args);
           case "search_items":
             return await this.searchItems(args);
+          case "get_upcoming_todos":
+            return await this.getUpcomingTodos(args);
+          case "update_todo":
+            return await this.updateTodo(args);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -341,92 +454,44 @@ class ThingsExtension {
   }
 
   async createTodo(args) {
-    // Validate all inputs
-    const validatedName = ThingsValidator.validateStringInput(args.name, "name");
-    const validatedNotes = args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null;
-    const validatedDueDate = args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null;
-    const validatedProject = args.project ? ThingsValidator.validateStringInput(args.project, "project") : null;
-    const validatedArea = args.area ? ThingsValidator.validateStringInput(args.area, "area") : null;
-    const validatedTags = args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : null;
-
-    ThingsLogger.info("Creating to-do", { name: validatedName });
-
-    const scriptParams = {
-      name: validatedName,
-      notes: validatedNotes,
-      due_date: validatedDueDate,
-      project: validatedProject,
-      area: validatedArea,
-      tags: validatedTags
-    };
+    const scriptParams = ParameterMapper.validateAndMapParameters(args);
+    
+    ThingsLogger.info("Creating to-do", { name: scriptParams.name });
 
     const scriptTemplate = AppleScriptTemplates.createTodo(scriptParams);
-    const buildParams = ParameterBuilder.buildParameters(scriptParams, validatedTags, validatedDueDate);
-    const script = AppleScriptSanitizer.buildScript(scriptTemplate, buildParams);
-    const result = await this.executeAppleScript(script);
+    const result = await this.executeThingsScript(scriptTemplate, scriptParams, "Create todo");
     
-    // Log warnings for potential issues
-    if (validatedProject) {
-      ThingsLogger.info("To-do created with project assignment", { 
-        name: validatedName, 
-        project: validatedProject,
-        note: "If project doesn't exist, todo will remain in inbox"
-      });
-    }
-    if (validatedArea) {
-      ThingsLogger.info("To-do created with area assignment", { 
-        name: validatedName, 
-        area: validatedArea,
-        note: "If area doesn't exist, todo will remain in inbox"
-      });
-    }
-    
-    ThingsLogger.info("To-do created successfully", { name: validatedName, id: result });
+    ThingsLogger.logAssignmentWarnings(scriptParams, "created");
+    ThingsLogger.info("To-do created successfully", { name: scriptParams.name, id: result });
     
     return DataParser.createSuccessResponse({
       success: true,
-      message: `Created to-do: ${validatedName}`,
+      message: `Created to-do: ${scriptParams.name}`,
       id: result,
     });
   }
 
   async createProject(args) {
-    // Validate all inputs
-    const validatedName = ThingsValidator.validateStringInput(args.name, "name");
-    const validatedNotes = args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null;
-    const validatedDueDate = args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null;
-    const validatedArea = args.area ? ThingsValidator.validateStringInput(args.area, "area") : null;
-    const validatedTags = args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : null;
-
-    ThingsLogger.info("Creating project", { name: validatedName });
-
-    const scriptParams = {
-      name: validatedName,
-      notes: validatedNotes,
-      due_date: validatedDueDate,
-      area: validatedArea,
-      tags: validatedTags
-    };
+    const scriptParams = ParameterMapper.validateAndMapParameters(args);
+    
+    ThingsLogger.info("Creating project", { name: scriptParams.name });
 
     const scriptTemplate = AppleScriptTemplates.createProject(scriptParams);
-    const buildParams = ParameterBuilder.buildParameters(scriptParams, validatedTags, validatedDueDate);
-    const script = AppleScriptSanitizer.buildScript(scriptTemplate, buildParams);
-    const result = await this.executeAppleScript(script);
+    const result = await this.executeThingsScript(scriptTemplate, scriptParams, "Create project");
     
-    // Log warnings for potential issues
-    if (validatedArea) {
+    if (scriptParams.area) {
       ThingsLogger.info("Project created with area assignment", { 
-        name: validatedName, 
-        area: validatedArea,
+        name: scriptParams.name, 
+        area: scriptParams.area,
         note: "If area doesn't exist, project will remain without area assignment"
       });
     }
     
-    ThingsLogger.info("Project created successfully", { name: validatedName, id: result });
+    ThingsLogger.info("Project created successfully", { name: scriptParams.name, id: result });
     
     return DataParser.createSuccessResponse({
       success: true,
-      message: `Created project: ${validatedName}`,
+      message: `Created project: ${scriptParams.name}`,
       id: result,
     });
   }
@@ -618,6 +683,58 @@ class ThingsExtension {
       type: searchType,
       count: searchResults.length,
       results: searchResults,
+    });
+  }
+
+  async getUpcomingTodos(args) {
+    // Validate inputs
+    const validatedDays = args.days ? ThingsValidator.validateNumberInput(args.days, "days", 1, 365) : 7;
+    const validatedLimit = args.limit ? ThingsValidator.validateNumberInput(args.limit, "limit", 1, 1000) : 50;
+    const completed = Boolean(args.completed);
+
+    ThingsLogger.info("Getting upcoming todos", { days: validatedDays, completed, limit: validatedLimit });
+
+    const script = AppleScriptTemplates.getUpcomingTodos(validatedDays, completed);
+    const result = await this.executeAppleScript(script);
+    const todos = DataParser.parseTodos(result);
+    const limitedTodos = todos.slice(0, validatedLimit);
+    
+    ThingsLogger.info("Retrieved upcoming todos successfully", { count: limitedTodos.length, total: todos.length });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      days: validatedDays,
+      completed_included: completed,
+      count: limitedTodos.length,
+      total_count: todos.length,
+      todos: limitedTodos,
+    });
+  }
+
+  async updateTodo(args) {
+    const scriptParams = ParameterMapper.validateAndMapParameters(args);
+    
+    ThingsLogger.info("Updating to-do", { name: scriptParams.name });
+
+    const scriptTemplate = AppleScriptTemplates.updateTodo(scriptParams);
+    const result = await this.executeThingsScript(scriptTemplate, scriptParams, "Update todo");
+    
+    if (result.trim() === "not_found") {
+      ThingsLogger.warn("Todo not found for update", { name: scriptParams.name });
+      
+      return DataParser.createSuccessResponse({
+        success: false,
+        message: `To-do not found: ${scriptParams.name}`,
+        error: "TODO_NOT_FOUND"
+      });
+    }
+    
+    ThingsLogger.logAssignmentWarnings(scriptParams, "updated");
+    ThingsLogger.info("To-do updated successfully", { name: scriptParams.name });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      message: `Updated to-do: ${scriptParams.name}`,
     });
   }
 
