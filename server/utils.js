@@ -33,12 +33,23 @@ export class ThingsValidator {
       );
     }
     
-    // Basic sanitization - prevent AppleScript injection
-    if (input.includes('"') || input.includes("'") || input.includes('\\')) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `${fieldName} contains invalid characters`
-      );
+    // Allow quotes and apostrophes since AppleScriptSanitizer handles proper escaping
+    // Only reject truly dangerous patterns like script injection attempts
+    const dangerousPatterns = [
+      /tell\s+application/i,    // Prevents: tell application "System Events" 
+      /end\s+tell/i,            // Prevents: end tell (AppleScript block closure)
+      /set\s+\w+\s+to/i,        // Prevents: set variable to malicious value
+      /do\s+shell\s+script/i,   // Prevents: do shell script "rm -rf /"
+      /osascript/i              // Prevents: osascript command injection
+    ];
+    
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(input)) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `${fieldName} contains potentially dangerous script patterns`
+        );
+      }
     }
     
     return input.trim();
@@ -202,23 +213,43 @@ export class StatusValidator {
 export class ParameterMapper {
   /**
    * Validate and map user-friendly parameters to internal parameters
-   * Maps: due_date (user) -> activation_date (internal), deadline (user) -> due_date (internal)
+   * Maps: when (user) -> activation_date (internal), deadline (user) -> due_date (internal)
    */
   static validateAndMapParameters(args, additionalFields = {}) {
     const result = {
-      name: args.name ? ThingsValidator.validateStringInput(args.name, "name") : null,
-      new_name: args.new_name ? ThingsValidator.validateStringInput(args.new_name, "new_name") : null,
+      // Support both old (name) and new (title) parameter names for backward compatibility
+      name: args.title ? ThingsValidator.validateStringInput(args.title, "title") : 
+            (args.name ? ThingsValidator.validateStringInput(args.name, "name") : null),
+      title: args.title ? ThingsValidator.validateStringInput(args.title, "title") : null,
+      id: args.id ? ThingsValidator.validateStringInput(args.id, "id") : null,
       notes: args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null,
       
-      // Map user-friendly parameters to internal parameters
-      // due_date (user) -> activation_date (internal) 
-      // deadline (user) -> due_date (internal)
-      activation_date: args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null,
+      // Map user-friendly parameters to internal Things 3 parameters
+      // User terminology -> Things 3 terminology:
+      // - "when" (when to work on it) -> "activation_date" (Things 3 internal field)
+      // - "deadline" (when it's due) -> "due_date" (Things 3 internal field)
+      // Also supports legacy parameter names for backward compatibility
+      activation_date: args.when ? ThingsValidator.validateDateInput(args.when, "when") : 
+                      (args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null),
       due_date: args.deadline ? ThingsValidator.validateDateInput(args.deadline, "deadline") : null,
       
-      project: args.project ? ThingsValidator.validateStringInput(args.project, "project") : null,
-      area: args.area ? ThingsValidator.validateStringInput(args.area, "area") : null,
+      // Area and project mappings
+      area: args.area_title ? ThingsValidator.validateStringInput(args.area_title, "area_title") : 
+            (args.area ? ThingsValidator.validateStringInput(args.area, "area") : null),
+      area_id: args.area_id ? ThingsValidator.validateStringInput(args.area_id, "area_id") : null,
+      project: args.list_title ? ThingsValidator.validateStringInput(args.list_title, "list_title") : 
+               (args.project ? ThingsValidator.validateStringInput(args.project, "project") : null),
+      list_id: args.list_id ? ThingsValidator.validateStringInput(args.list_id, "list_id") : null,
+      
+      // Additional fields
       tags: args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : null,
+      checklist_items: args.checklist_items ? ThingsValidator.validateArrayInput(args.checklist_items, "checklist_items") : null,
+      todos: args.todos ? ThingsValidator.validateArrayInput(args.todos, "todos") : null,
+      heading: args.heading ? ThingsValidator.validateStringInput(args.heading, "heading") : null,
+      
+      // Status flags
+      completed: args.completed !== undefined ? Boolean(args.completed) : null,
+      canceled: args.canceled !== undefined ? Boolean(args.canceled) : null,
       
       ...additionalFields
     };
@@ -271,20 +302,32 @@ export class ParameterBuilder {
 }
 
 export class AppleScriptSanitizer {
+  /**
+   * Sanitize a string for safe inclusion in AppleScript
+   * @param {*} input - The input to sanitize (will be converted to string)
+   * @returns {string} - Escaped string safe for AppleScript
+   */
   static sanitizeString(input) {
     if (typeof input !== 'string') {
       return '';
     }
     
     // Escape dangerous characters for AppleScript
+    // Order matters: backslashes must be escaped first
     return input
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/'/g, "\\'")
-      .replace(/\r?\n/g, '\\n')
-      .replace(/\t/g, '\\t');
+      .replace(/\\/g, '\\\\')     // Escape backslashes: \ -> \\
+      .replace(/"/g, '\\"')       // Escape double quotes: " -> \"
+      .replace(/'/g, "\\'")       // Escape single quotes: ' -> \'
+      .replace(/\r?\n/g, '\\n')   // Convert newlines to \n
+      .replace(/\t/g, '\\t');     // Convert tabs to \t
   }
   
+  /**
+   * Build an AppleScript from a template, safely replacing placeholders
+   * @param {string} template - AppleScript template with {{placeholder}} markers
+   * @param {Object} params - Parameters to replace in the template
+   * @returns {string} - Complete AppleScript with sanitized parameters
+   */
   static buildScript(template, params = {}) {
     let script = template;
     
@@ -338,18 +381,19 @@ export class ThingsLogger {
    * Log warnings for project/area assignments that might not exist
    */
   static logAssignmentWarnings(scriptParams, operation = "created") {
-    if (scriptParams.project) {
-      this.info(`To-do ${operation} with project assignment`, { 
-        name: scriptParams.name, 
-        project: scriptParams.project,
-        note: "If project doesn't exist, todo will remain in current location"
+    const itemName = scriptParams.title || scriptParams.name;
+    if (scriptParams.project || scriptParams.list_title) {
+      this.info(`Item ${operation} with project assignment`, { 
+        name: itemName, 
+        project: scriptParams.project || scriptParams.list_title,
+        note: "If project doesn't exist, item will remain in current location"
       });
     }
-    if (scriptParams.area) {
-      this.info(`To-do ${operation} with area assignment`, { 
-        name: scriptParams.name, 
-        area: scriptParams.area,
-        note: "If area doesn't exist, todo will remain in current location"
+    if (scriptParams.area || scriptParams.area_title) {
+      this.info(`Item ${operation} with area assignment`, { 
+        name: itemName, 
+        area: scriptParams.area || scriptParams.area_title,
+        note: "If area doesn't exist, item will remain in current location"
       });
     }
   }

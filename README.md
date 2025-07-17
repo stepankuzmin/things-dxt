@@ -1,280 +1,267 @@
 # Things DXT - Claude Desktop Extension
 
-A comprehensive Claude Desktop Extension that provides seamless integration with Things 3, the award-winning personal task manager for macOS. This extension allows you to create, manage, organize, search, and maintain your entire task workflow directly from Claude conversations using robust AppleScript automation.
+A comprehensive Claude Desktop Extension that provides seamless integration with Things 3, enabling you to manage your complete task workflow directly from Claude conversations using robust AppleScript automation.
+
+## Quick Start
+
+1. **Install Dependencies**: `npm install`
+2. **Package Extension**: `dxt pack .`
+3. **Install in Claude Desktop**: Follow Claude Desktop's extension installation process
+4. **Launch Things 3**: Ensure Things 3 is running before using commands
+
+> **💡 Pro Tip**: Use `when` for scheduling (when to work on) and `deadline` for final due dates.
 
 ## Features
 
-- **Complete Task Lifecycle**: Create, read, update, complete, cancel, and delete tasks
-- **Project Management**: Full project creation, management, and organization
-- **Area Organization**: Create and manage high-level organizational areas
-- **Advanced Search**: Powerful search across all your Things data with filtering
-- **Flexible Retrieval**: Get tasks by list type, status, timeframe, and more
-- **Update Operations**: Modify existing tasks with full parameter control
-- **Status Management**: Complete, cancel, or delete items as needed
-- **Upcoming Tasks**: Time-based task retrieval for planning
+### 🎯 Core Functionality
+- **Complete Task Management**: Create, read, update, and search todos and projects
+- **Smart List Access**: Work with all Things 3 lists (Inbox, Today, Upcoming, Anytime, Someday)
+- **Project & Area Organization**: Full project and area management capabilities
+- **Advanced Search**: Multiple search types across all your Things data
+
+### 🔍 Discovery & Navigation  
+- **Tag Management**: Get all tags and find items by specific tags
+- **Logbook Access**: View completed tasks with flexible time periods
+- **Trash Management**: Access and review trashed items
+- **Recent Items**: Find recently modified items
+
+### 🛠️ Advanced Features
+- **Flexible Updates**: Modify existing tasks and projects with full parameter control
 - **Data Integrity**: Comprehensive input validation and error handling
 - **Security**: Built-in AppleScript injection protection and safe execution
+- **User-Friendly Parameters**: Intuitive date terminology and parameter mapping
 
-## Requirements
+## API Reference
 
-- **macOS**: This extension only works on macOS due to AppleScript requirements
-- **Things 3**: Must be installed and accessible via AppleScript
-- **Node.js**: Version 18.0.0 or higher
-- **Claude Desktop**: Compatible with DXT specification 0.1
+### 📝 Creation Tools
 
-## Installation
+#### `add_todo` - Create a new to-do
+**Required**: `title`  
+**Optional**: `notes`, `when`, `deadline`, `list_title`, `list_id`, `heading`, `tags`, `checklist_items`
 
-1. **Download or Clone**: Get the extension files to your local machine
-2. **Install Dependencies**: 
-   ```bash
-   cd things-dxt
-   npm install
-   ```
-3. **Package Extension**: Create the DXT package
-   ```bash
-   dxt pack .
-   ```
-4. **Install in Claude Desktop**: Follow Claude Desktop's extension installation process
+#### `add_project` - Create a new project  
+**Required**: `title`  
+**Optional**: `notes`, `when`, `deadline`, `area_title`, `area_id`, `tags`, `todos`
 
-## Available Tools
+### 📋 List Access Tools
 
-> **Date Parameter Note**: This extension uses user-friendly date terminology:
-> - `due_date` = "when scheduled to work on" (appears in Today/Upcoming lists)
-> - `deadline` = "when actually due" (the final deadline)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_inbox` | Get todos from Inbox | None |
+| `get_today` | Get todos due today | None |
+| `get_upcoming` | Get upcoming todos | None |
+| `get_anytime` | Get Anytime list todos | None |
+| `get_someday` | Get Someday list todos | None |
+| `get_logbook` | Get completed todos | `period`, `limit` |
+| `get_trash` | Get trashed todos | None |
 
-### Creation Operations
+#### `get_todos` - Get todos with filtering
+**Optional**: `project_uuid`, `include_items`
 
-#### `create_todo`
-Create a new to-do item in Things.
+#### `get_projects` - Get all projects
+**Optional**: `include_items`
 
-**Parameters:**
-- `name` (required): The title of the to-do item
-- `notes` (optional): Additional notes (max 10,000 characters)
-- `due_date` (optional): When to work on it in YYYY-MM-DD format
-- `deadline` (optional): Final deadline in YYYY-MM-DD format
-- `project` (optional): Project name to add the to-do to
-- `area` (optional): Area name to add the to-do to
-- `tags` (optional): Array of tag names (max 50)
+#### `get_areas` - Get all areas
+**Optional**: `include_items`
 
-#### `create_project`
-Create a new project in Things.
+### 🔍 Search & Discovery Tools
 
-**Parameters:**
-- `name` (required): The name of the project
-- `notes` (optional): Project description or notes
-- `area` (optional): Area to assign the project to
-- `due_date` (optional): When to work on project
-- `deadline` (optional): Project final deadline
-- `tags` (optional): Array of tag names
+#### `search_items` - Universal search
+**Required**: `query`
 
-#### `create_area`
-Create a new area for organizing projects and tasks.
+#### `search_todos` - Todo-specific search  
+**Required**: `query`
 
-**Parameters:**
-- `name` (required): The name of the area
-- `tags` (optional): Array of tag names
+#### `search_advanced` - Multi-criteria search
+**Required**: `query`  
+**Optional**: `tags`, `completed`, `canceled`, `trashed`
 
-### Retrieval Operations
+#### `get_tags` - Get all tags
+**Parameters**: None
 
-#### `get_todos`
-Retrieve to-do items with advanced filtering.
+#### `get_tagged_items` - Find items by tag
+**Required**: `tag_title`
 
-**Parameters:**
-- `list` (optional): "inbox", "today", "upcoming", "anytime", "someday", "all" (default: "all")
-- `status` (optional): "open", "completed", "canceled" (default: "open")
-- `limit` (optional): Maximum items to return (1-1000, default: 50)
+#### `get_recent` - Get recent items
+**Optional**: `days` (default: 7)
 
-#### `get_projects`
-Get projects with filtering options.
+### ✏️ Update Tools
 
-**Parameters:**
-- `area` (optional): Filter projects by area name
-- `status` (optional): "open", "completed", "canceled" (default: "open")
-- `limit` (optional): Maximum items to return (1-1000, default: 50)
+#### `update_todo` - Update existing todo
+**Required**: `id`  
+**Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `completed`, `canceled`
 
-#### `get_areas`
-Get all areas from Things. No parameters required.
+#### `update_project` - Update existing project
+**Required**: `id`  
+**Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `completed`, `canceled`
 
-#### `get_upcoming_todos`
-Get upcoming todos within a specified timeframe.
-
-**Parameters:**
-- `days` (optional): Number of days ahead to look (default: 7)
-- `completed` (optional): Include completed todos (default: false)
-- `limit` (optional): Maximum items to return (default: 50)
-
-### Search Operations
-
-#### `search_items`
-Search for items across your Things database.
-
-**Parameters:**
-- `query` (required): Search query text
-- `type` (optional): "all", "todo", "project", "area" (default: "all")
-
-### Update Operations
-
-#### `update_todo`
-Update an existing to-do item.
-
-**Parameters:**
-- `name` (required): Current name of the to-do to update
-- `new_name` (optional): New name for the to-do
-- `notes` (optional): New notes for the to-do
-- `due_date` (optional): New due date
-- `deadline` (optional): New deadline
-- `project` (optional): Move to this project
-- `area` (optional): Move to this area
-- `tags` (optional): Set new tags (replaces existing)
-
-### Status Management
-
-#### `complete_todo`
-Mark a to-do as completed.
-
-**Parameters:**
-- `name` (required): The name of the to-do to complete
-
-#### `cancel_todo`
-Cancel a to-do item.
-
-**Parameters:**
-- `name` (required): The name of the to-do to cancel
-
-#### `cancel_project`
-Cancel a project.
-
-**Parameters:**
-- `name` (required): The name of the project to cancel
-
-### Delete Operations
-
-#### `delete_todo`
-Permanently delete a to-do item.
-
-**Parameters:**
-- `name` (required): The name of the to-do to delete
-
-#### `delete_project`
-Permanently delete a project.
-
-**Parameters:**
-- `name` (required): The name of the project to delete
-
-#### `delete_area`
-Permanently delete an area.
-
-**Parameters:**
-- `name` (required): The name of the area to delete
+#### `show_item` - Show item details
+**Required**: `id`
 
 ## Usage Examples
 
-### Creating and Managing Tasks
+### Daily Workflow
 ```
-Create a task called "Prepare presentation" with notes "Include Q3 metrics and future roadmap" due tomorrow in my Work project with tags "urgent" and "presentation"
+Show me my inbox and today's tasks, then help me plan my day
 ```
 
-### Planning Your Day
+### Task Creation
 ```
-Show me all my tasks for today and help me prioritize them
+Create a task "Prepare quarterly report" with notes "Include Q3 metrics and future roadmap" due next Friday in my Work project with tags "urgent" and "quarterly"
 ```
 
 ### Project Management
 ```
-Create a new project called "Website Redesign" in my "Product Development" area with a deadline of March 15th
+Create a new project "Website Redesign" in my "Product Development" area with deadline March 15th and add initial todos: "Research competitors", "Create wireframes", "Design mockups"
 ```
 
-### Updating Tasks
+### Search & Organization
 ```
-Update my task "Review proposal" to move it to the "Client Work" project and change the due date to next Friday
-```
-
-### Advanced Search and Filtering
-```
-Search for all tasks containing "meeting" and show me upcoming tasks for the next 3 days
+Search for all tasks containing "meeting" and show me what's tagged with "urgent"
 ```
 
-### Task Lifecycle Management
+### Weekly Review
 ```
-Complete the task "Submit quarterly report" and cancel the project "Outdated Initiative"
-```
-
-### Bulk Operations
-```
-Show me all completed tasks from last week and help me archive the related projects
+Show me what I completed last week, what's in my logbook, and help me organize my upcoming tasks
 ```
 
-## Security Features
+## Parameter Guide
 
-- **Comprehensive Input Validation**: All inputs validated for type, length, and content with strict limits
-- **AppleScript Injection Protection**: Advanced sanitization prevents code injection attacks
-- **Error Handling**: Robust error handling with structured responses and detailed logging
-- **Timeout Management**: AppleScript execution timeouts prevent hanging operations
-- **Safe Execution**: Secure command execution with process isolation
-- **Data Integrity**: Validation ensures data consistency across all operations
-- **Parameter Limits**: Enforced limits on array sizes, string lengths, and object counts
+### Date Parameters
+- **`when`**: When scheduled to work on (appears in Today/Upcoming)
+- **`deadline`**: When actually due (final deadline)
+- **Format**: YYYY-MM-DD (e.g., "2024-03-15")
 
-## Troubleshooting
+### Organization Parameters
+- **`list_title`/`area_title`**: Use names for easy reference
+- **`list_id`/`area_id`**: Use IDs for precise targeting
+- **`tags`**: Array of tag names (e.g., ["urgent", "work"])
 
-### Things 3 Not Running
-If you get an error that Things 3 is not running:
-1. Launch Things 3 application
-2. Ensure it's not just in the dock but actually running
-3. Try the command again
+### Update Parameters
+- **`id`**: Required for all update operations
+- **Status flags**: `completed`, `canceled` (boolean)
 
-### Permission Issues
-If you encounter AppleScript permission errors:
-1. Go to System Preferences > Security & Privacy > Privacy
-2. Select "Automation" from the left sidebar
-3. Ensure the terminal or application running Claude Desktop has permission to control Things 3
+## Requirements
 
-### Debug Mode
-Enable debug logging by setting the DEBUG environment variable:
+- **macOS**: Required for AppleScript integration
+- **Things 3**: Must be installed and accessible
+- **Node.js**: Version 18.0.0 or higher
+- **Claude Desktop**: Compatible with DXT specification
+
+## Installation
+
 ```bash
-DEBUG=true node server/index.js
+# Clone or download the extension
+cd things-dxt
+
+# Install dependencies
+npm install
+
+# Package the extension
+dxt pack .
+
+# Install in Claude Desktop (follow Claude Desktop docs)
 ```
 
-## Development
+## Architecture
 
 ### Project Structure
 ```
 things-dxt/
-├── manifest.json                    # DXT extension manifest
-├── package.json                     # Node.js dependencies
-├── README.md                       # This documentation
-├── server/
-│   ├── index.js                    # Main MCP server implementation
-│   ├── utils.js                    # Validation and security utilities
-│   ├── applescript-templates.js    # AppleScript generation templates
-│   └── data-parser.js              # Response parsing and formatting
+├── manifest.json              # DXT extension manifest
+├── package.json               # Dependencies and scripts
+├── README.md                  # Documentation
+└── server/
+    ├── index.js               # Main MCP server
+    ├── tool-definitions.js    # MCP tool schemas
+    ├── tool-handlers.js       # Tool implementation logic
+    ├── server-config.js       # Configuration constants
+    ├── utils.js               # Validation and utilities
+    ├── applescript-templates.js # AppleScript generation
+    └── data-parser.js         # Response parsing
 ```
 
-### Testing
-To test the extension locally:
-1. Start the MCP server: `npm start`
-2. Test individual AppleScript commands in Script Editor
-3. Validate JSON responses match expected schemas
+### Key Design Principles
+- **Separation of Concerns**: Modular architecture with clear responsibilities
+- **Security First**: Input validation and AppleScript injection protection
+- **User-Friendly**: Intuitive parameter names and helpful error messages
+- **Robust Error Handling**: Comprehensive error catching and reporting
+- **Extensible**: Easy to add new tools and functionality
 
-### Contributing
-1. Ensure all new features include proper input validation and security measures
-2. Add comprehensive error handling with structured responses
-3. Update documentation for new tools or parameters
-4. Test thoroughly with Things 3 on macOS across different scenarios
-5. Follow the established patterns for AppleScript templates and data parsing
-6. Maintain backward compatibility when possible
+## Security Features
+
+- **Input Validation**: All parameters validated for type, length, and content
+- **AppleScript Protection**: Advanced sanitization prevents code injection
+- **Error Handling**: Structured error responses with detailed logging
+- **Timeout Management**: Prevents hanging AppleScript operations
+- **Safe Execution**: Secure command execution with process isolation
+
+## Development
+
+### Testing
+```bash
+# Syntax validation
+npm run validate
+
+# Debug mode
+DEBUG=true npm start
+
+# Test individual AppleScript in Script Editor
+```
+
+### Adding New Tools
+1. Add tool definition to `tool-definitions.js`
+2. Implement handler in `tool-handlers.js`
+3. Add routing in `index.js` `getHandlerMethod()`
+4. Update documentation
+
+### Contributing Guidelines
+- Include comprehensive input validation
+- Add structured error handling
+- Update documentation for new features
+- Test thoroughly with Things 3 on macOS
+- Follow established patterns and conventions
+- Maintain backward compatibility when possible
+
+## Troubleshooting
+
+### Common Issues
+
+**Things 3 Not Running**
+```
+Solution: Launch Things 3 application and ensure it's running (not just in dock)
+```
+
+**Permission Errors**
+```
+Solution: 
+1. System Preferences > Security & Privacy > Privacy
+2. Select "Automation" 
+3. Grant permission for your terminal/Claude Desktop to control Things 3
+```
+
+**Debug Information**
+```bash
+# Enable detailed logging
+DEBUG=true npm start
+```
+
+### Getting Help
+
+- **Things 3 Issues**: Contact Cultured Code support
+- **Claude Desktop**: Follow Claude Desktop documentation  
+- **Extension Issues**: Create issue in project repository
 
 ## License
 
-MIT License - see package.json for details.
-
-## Support
-
-For issues related to:
-- **Things 3**: Contact Cultured Code support
-- **Claude Desktop**: Follow Claude Desktop documentation
-- **This Extension**: Create an issue in the project repository
+MIT License - See package.json for details
 
 ## Acknowledgments
 
-- Thanks to Cultured Code for providing comprehensive AppleScript support in Things 3
-- Built using the Model Context Protocol (MCP) SDK from Anthropic
+- **Cultured Code** for comprehensive AppleScript support in Things 3
+- **Anthropic** for the Model Context Protocol (MCP) SDK
+- **things-mcp project** for architectural inspiration
+
+---
+
+*Built with ❤️ for the Claude Desktop ecosystem*

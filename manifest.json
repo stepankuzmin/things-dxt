@@ -2,7 +2,7 @@
   "dxt_version": "0.1",
   "name": "things-dxt",
   "display_name": "Things (AppleScript)",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
   "long_description": "This extension provides seamless integration between Claude Desktop and Things task manager through AppleScript automation. Create, manage, and organize your tasks directly from Claude conversations. Features include creating to-dos, projects, areas, tags, and managing your task workflow efficiently.",
   "author": {
@@ -49,40 +49,84 @@
   },
   "tools": [
     {
-      "name": "create_todo",
+      "name": "add_todo",
       "description": "Create a new to-do item in Things"
     },
     {
-      "name": "create_project",
+      "name": "add_project",
       "description": "Create a new project in Things"
     },
     {
-      "name": "create_area",
-      "description": "Create a new area in Things"
+      "name": "get_areas",
+      "description": "Get all areas from Things"
     },
     {
       "name": "get_todos",
-      "description": "Get to-do items from Things"
+      "description": "Get todos from Things, optionally filtered by project"
     },
     {
       "name": "get_projects",
-      "description": "Get projects from Things"
+      "description": "Get all projects from Things"
     },
     {
-      "name": "get_areas",
-      "description": "Get areas from Things"
+      "name": "get_inbox",
+      "description": "Get todos from Inbox"
     },
     {
-      "name": "complete_todo",
-      "description": "Mark a to-do as completed in Things"
+      "name": "get_today",
+      "description": "Get todos due today"
     },
     {
-      "name": "show_quick_entry",
-      "description": "Show Things Quick Entry panel"
+      "name": "get_upcoming",
+      "description": "Get upcoming todos"
+    },
+    {
+      "name": "get_anytime",
+      "description": "Get todos from Anytime list"
+    },
+    {
+      "name": "get_someday",
+      "description": "Get todos from Someday list"
+    },
+    {
+      "name": "get_logbook",
+      "description": "Get completed todos from Logbook"
+    },
+    {
+      "name": "get_trash",
+      "description": "Get trashed todos"
+    },
+    {
+      "name": "get_tags",
+      "description": "Get all tags from Things"
+    },
+    {
+      "name": "get_tagged_items",
+      "description": "Get items with a specific tag"
+    },
+    {
+      "name": "search_todos",
+      "description": "Search for todos"
+    },
+    {
+      "name": "search_advanced",
+      "description": "Advanced search with multiple criteria"
+    },
+    {
+      "name": "get_recent",
+      "description": "Get recently modified items"
+    },
+    {
+      "name": "update_todo",
+      "description": "Update an existing to-do item in Things"
+    },
+    {
+      "name": "update_project",
+      "description": "Update an existing project in Things"
     },
     {
       "name": "show_item",
-      "description": "Show a specific item in Things"
+      "description": "Show details of a specific item"
     },
     {
       "name": "search_items",
