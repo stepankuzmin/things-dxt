@@ -202,23 +202,41 @@ export class StatusValidator {
 export class ParameterMapper {
   /**
    * Validate and map user-friendly parameters to internal parameters
-   * Maps: due_date (user) -> activation_date (internal), deadline (user) -> due_date (internal)
+   * Maps: when (user) -> activation_date (internal), deadline (user) -> due_date (internal)
    */
   static validateAndMapParameters(args, additionalFields = {}) {
     const result = {
-      name: args.name ? ThingsValidator.validateStringInput(args.name, "name") : null,
-      new_name: args.new_name ? ThingsValidator.validateStringInput(args.new_name, "new_name") : null,
+      // Support both old (name) and new (title) parameter names for backward compatibility
+      name: args.title ? ThingsValidator.validateStringInput(args.title, "title") : 
+            (args.name ? ThingsValidator.validateStringInput(args.name, "name") : null),
+      title: args.title ? ThingsValidator.validateStringInput(args.title, "title") : null,
+      id: args.id ? ThingsValidator.validateStringInput(args.id, "id") : null,
       notes: args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null,
       
       // Map user-friendly parameters to internal parameters
-      // due_date (user) -> activation_date (internal) 
+      // when (user) -> activation_date (internal)
       // deadline (user) -> due_date (internal)
-      activation_date: args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null,
+      activation_date: args.when ? ThingsValidator.validateDateInput(args.when, "when") : 
+                      (args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null),
       due_date: args.deadline ? ThingsValidator.validateDateInput(args.deadline, "deadline") : null,
       
-      project: args.project ? ThingsValidator.validateStringInput(args.project, "project") : null,
-      area: args.area ? ThingsValidator.validateStringInput(args.area, "area") : null,
+      // Area and project mappings
+      area: args.area_title ? ThingsValidator.validateStringInput(args.area_title, "area_title") : 
+            (args.area ? ThingsValidator.validateStringInput(args.area, "area") : null),
+      area_id: args.area_id ? ThingsValidator.validateStringInput(args.area_id, "area_id") : null,
+      project: args.list_title ? ThingsValidator.validateStringInput(args.list_title, "list_title") : 
+               (args.project ? ThingsValidator.validateStringInput(args.project, "project") : null),
+      list_id: args.list_id ? ThingsValidator.validateStringInput(args.list_id, "list_id") : null,
+      
+      // Additional fields
       tags: args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : null,
+      checklist_items: args.checklist_items ? ThingsValidator.validateArrayInput(args.checklist_items, "checklist_items") : null,
+      todos: args.todos ? ThingsValidator.validateArrayInput(args.todos, "todos") : null,
+      heading: args.heading ? ThingsValidator.validateStringInput(args.heading, "heading") : null,
+      
+      // Status flags
+      completed: args.completed !== undefined ? Boolean(args.completed) : null,
+      canceled: args.canceled !== undefined ? Boolean(args.canceled) : null,
       
       ...additionalFields
     };
@@ -338,18 +356,19 @@ export class ThingsLogger {
    * Log warnings for project/area assignments that might not exist
    */
   static logAssignmentWarnings(scriptParams, operation = "created") {
-    if (scriptParams.project) {
-      this.info(`To-do ${operation} with project assignment`, { 
-        name: scriptParams.name, 
-        project: scriptParams.project,
-        note: "If project doesn't exist, todo will remain in current location"
+    const itemName = scriptParams.title || scriptParams.name;
+    if (scriptParams.project || scriptParams.list_title) {
+      this.info(`Item ${operation} with project assignment`, { 
+        name: itemName, 
+        project: scriptParams.project || scriptParams.list_title,
+        note: "If project doesn't exist, item will remain in current location"
       });
     }
-    if (scriptParams.area) {
-      this.info(`To-do ${operation} with area assignment`, { 
-        name: scriptParams.name, 
-        area: scriptParams.area,
-        note: "If area doesn't exist, todo will remain in current location"
+    if (scriptParams.area || scriptParams.area_title) {
+      this.info(`Item ${operation} with area assignment`, { 
+        name: itemName, 
+        area: scriptParams.area || scriptParams.area_title,
+        note: "If area doesn't exist, item will remain in current location"
       });
     }
   }
