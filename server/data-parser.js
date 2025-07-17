@@ -4,8 +4,8 @@
  * This module handles parsing of tab-separated data returned from AppleScript commands.
  * Key features:
  * - Maps internal Things 3 fields to user-friendly response fields
- * - due_date (internal: activation_date) = when scheduled to work on
- * - deadline (internal: due_date) = when actually due
+ * - due_date (from AppleScript activation_date) = when scheduled to work on
+ * - deadline (from AppleScript due_date) = when actually due
  * - Handles various data types: todos, projects, areas, search results
  * - Robust parsing with fallback values for missing data
  */
@@ -30,8 +30,8 @@ export class DataParser {
           id: parts[0] || '',
           name: parts[1] || '',
           notes: parts[2] || '',
-          deadline: parts[3] || '',  // Internal due_date -> user-friendly deadline
-          due_date: parts[4] || '',  // Internal activation_date -> user-friendly due_date
+          deadline: parts[3] || '',  // AppleScript due_date -> user deadline
+          due_date: parts[4] || '',  // AppleScript activation_date -> user due_date
           status: parts[5] || '',
           creation_date: parts[6] || '',
           modification_date: parts[7] || '',
@@ -65,8 +65,8 @@ export class DataParser {
           id: parts[0] || '',
           name: parts[1] || '',
           notes: parts[2] || '',
-          deadline: parts[3] || '',        // Internal due_date -> user-friendly deadline
-          due_date: parts[4] || '',        // Internal activation_date -> user-friendly due_date
+          deadline: parts[3] || '',        // AppleScript due_date -> user deadline
+          due_date: parts[4] || '',        // AppleScript activation_date -> user due_date
           status: parts[5] || '',
           creation_date: parts[6] || '',
           area: parts[7] || '',
@@ -129,8 +129,8 @@ export class DataParser {
             id: parts[1] || '',
             name: parts[2] || '',
             notes: parts[3] || '',
-            deadline: parts[4] || '',     // Internal due_date -> user-friendly deadline
-            due_date: parts[5] || '',     // Internal activation_date -> user-friendly due_date
+            deadline: parts[4] || '',     // AppleScript due_date -> user deadline
+            due_date: parts[5] || '',     // AppleScript activation_date -> user due_date
             status: parts[6] || '',
             project: parts[7] || '',
             area: parts[8] || ''
@@ -141,8 +141,8 @@ export class DataParser {
             id: parts[1] || '',
             name: parts[2] || '',
             notes: parts[3] || '',
-            deadline: parts[4] || '',     // Internal due_date -> user-friendly deadline
-            due_date: parts[5] || '',     // Internal activation_date -> user-friendly due_date
+            deadline: parts[4] || '',     // AppleScript due_date -> user deadline
+            due_date: parts[5] || '',     // AppleScript activation_date -> user due_date
             status: parts[6] || '',
             area: parts[7] || ''
           });

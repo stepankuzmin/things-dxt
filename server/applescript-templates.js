@@ -196,17 +196,20 @@ export class AppleScriptTemplates {
   }
 
   /**
-   * Update a todo by name
+   * Update a todo by ID or name
    */
-  static updateTodo({ name, new_name, notes, due_date, activation_date, project, area, tags }) {
+  static updateTodo({ id, name, title, new_name, notes, due_date, activation_date, project, area, tags, completed, canceled }) {
+    const searchClause = id ? `id "{{id}}"` : `name is "{{name}}"`;
+    const nameToUpdate = title || new_name;
+    
     let script = `tell application "Things3"
       try
-        set targetTodo to first to do whose name is "{{name}}"`;
+        set targetTodo to first to do whose ${searchClause}`;
     
-    // Update name if provided
-    if (new_name) {
+    // Update name/title if provided
+    if (nameToUpdate) {
       script += `
-        set name of targetTodo to "{{new_name}}"`;
+        set name of targetTodo to "{{title}}"`;
     }
     
     // Update notes if provided
@@ -225,6 +228,17 @@ export class AppleScriptTemplates {
     if (activation_date) {
       script += `
         set activation date of targetTodo to date "{{activation_date_formatted}}"`;
+    }
+    
+    // Update status if provided
+    if (completed !== undefined) {
+      script += `
+        set status of targetTodo to ${completed ? 'completed' : 'open'}`;
+    }
+    
+    if (canceled !== undefined) {
+      script += `
+        set status of targetTodo to ${canceled ? 'canceled' : 'open'}`;
     }
     
     // Update tags if provided
@@ -255,6 +269,84 @@ export class AppleScriptTemplates {
           move targetTodo to targetArea
         on error
           -- Area not found, leave todo in current location
+        end try`;
+    }
+    
+    script += `
+        return "updated"
+      on error
+        return "not_found"
+      end try
+    end tell`;
+    
+    return script;
+  }
+
+  /**
+   * Update a project by ID or name
+   */
+  static updateProject({ id, name, title, notes, due_date, activation_date, area, tags, completed, canceled }) {
+    const searchClause = id ? `id "{{id}}"` : `name is "{{name}}"`;
+    const nameToUpdate = title;
+    
+    let script = `tell application "Things3"
+      try
+        set targetProject to first project whose ${searchClause}`;
+    
+    // Update name/title if provided
+    if (nameToUpdate) {
+      script += `
+        set name of targetProject to "{{title}}"`;
+    }
+    
+    // Update notes if provided
+    if (notes) {
+      script += `
+        set notes of targetProject to "{{notes}}"`;
+    }
+    
+    // Update due date (deadline) if provided
+    if (due_date) {
+      script += `
+        set due date of targetProject to date "{{due_date_formatted}}"`;
+    }
+    
+    // Update activation date (when scheduled) if provided
+    if (activation_date) {
+      script += `
+        set activation date of targetProject to date "{{activation_date_formatted}}"`;
+    }
+    
+    // Update status if provided
+    if (completed !== undefined) {
+      script += `
+        set status of targetProject to ${completed ? 'completed' : 'open'}`;
+    }
+    
+    if (canceled !== undefined) {
+      script += `
+        set status of targetProject to ${canceled ? 'canceled' : 'open'}`;
+    }
+    
+    // Update tags if provided
+    if (tags && tags.length > 0) {
+      const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
+      script += `
+        try
+          set tag names of targetProject to {${tagPlaceholders}}
+        on error
+          -- Tags assignment failed, continue without tags
+        end try`;
+    }
+    
+    // Move to area if provided
+    if (area) {
+      script += `
+        try
+          set targetArea to first area whose name is "{{area}}"
+          move targetProject to targetArea
+        on error
+          -- Area not found, leave project in current location
         end try`;
     }
     
@@ -628,6 +720,26 @@ export class AppleScriptTemplates {
       end repeat
       return output
     end tell`;
+  }
+
+  /**
+   * Get all tags
+   */
+  static getTags() {
+    return `tell application "Things3"
+      set tagList to {}
+      repeat with aTag in tags
+        set end of tagList to name of aTag
+      end repeat
+      return my listToString(tagList)
+    end tell
+    
+    on listToString(lst)
+      set AppleScript's text item delimiters to "\\n"
+      set theString to lst as string
+      set AppleScript's text item delimiters to ""
+      return theString
+    end listToString`;
   }
 
   /**

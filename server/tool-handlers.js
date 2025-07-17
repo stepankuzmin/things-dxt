@@ -234,23 +234,7 @@ export class ToolHandlers {
   async getTags(args) {
     ThingsLogger.info("Getting tags");
 
-    const script = `
-      tell application "Things3"
-        set tagList to {}
-        repeat with aTag in tags
-          set end of tagList to name of aTag
-        end repeat
-        return my listToString(tagList)
-      end tell
-      
-      on listToString(lst)
-        set AppleScript's text item delimiters to "\\n"
-        set theString to lst as string
-        set AppleScript's text item delimiters to ""
-        return theString
-      end listToString
-    `;
-    
+    const script = AppleScriptTemplates.getTags();
     const result = await this.executeAppleScript(script);
     const tags = result.split('\n').filter(tag => tag.trim() !== '');
     
@@ -328,15 +312,84 @@ export class ToolHandlers {
 
   async searchAdvanced(args) {
     const validatedQuery = ThingsValidator.validateStringInput(args.query, "query");
-    const tags = args.tags || [];
-    const completed = args.completed || false;
-    const canceled = args.canceled || false;
-    const trashed = args.trashed || false;
+    const tags = args.tags ? ThingsValidator.validateArrayInput(args.tags, "tags") : [];
+    const completed = args.completed !== undefined ? Boolean(args.completed) : false;
+    const canceled = args.canceled !== undefined ? Boolean(args.canceled) : false;
+    const trashed = args.trashed !== undefined ? Boolean(args.trashed) : false;
     
     ThingsLogger.info("Advanced search", { query: validatedQuery, tags, completed, canceled, trashed });
 
-    // This is a simplified implementation - a full implementation would need more complex AppleScript
-    return await this.searchItems({ query: validatedQuery });
+    // Build status filter
+    let statusFilters = [];
+    if (!completed && !canceled && !trashed) {
+      statusFilters.push("status is open");
+    } else {
+      if (completed) statusFilters.push("status is completed");
+      if (canceled) statusFilters.push("status is canceled"); 
+      if (!completed && !canceled) statusFilters.push("status is open");
+    }
+    
+    const statusFilter = statusFilters.length > 1 ? 
+      `(${statusFilters.join(" or ")})` : 
+      statusFilters[0];
+
+    // Build tag filter
+    const tagFilter = tags.length > 0 ? 
+      tags.map(tag => `"${tag}" is in tag names`).join(" and ") : 
+      "";
+
+    const script = AppleScriptSanitizer.buildScript(`
+      tell application "Things3"
+        set searchResults to {}
+        set allTodos to to dos whose name contains "{{query}}"${statusFilter ? ` and ${statusFilter}` : ''}
+        
+        repeat with aTodo in allTodos
+          ${tagFilter ? `
+          set hasAllTags to true
+          ${tags.map(tag => `
+          if "${tag}" is not in tag names of aTodo then set hasAllTags to false`).join('')}
+          
+          if hasAllTags then` : ''}
+            set end of searchResults to ("todo" & tab & (id of aTodo) & tab & (name of aTodo) & tab & (notes of aTodo) & tab & (status of aTodo as string))
+          ${tagFilter ? 'end if' : ''}
+        end repeat
+        
+        return my listToString(searchResults)
+      end tell
+      
+      on listToString(lst)
+        set AppleScript's text item delimiters to "\\n"
+        set theString to lst as string
+        set AppleScript's text item delimiters to ""
+        return theString
+      end listToString
+    `, { query: validatedQuery });
+    
+    const result = await this.executeAppleScript(script);
+    const searchResults = result.split('\n').filter(line => line.trim() !== '').map(line => {
+      const parts = line.split('\t');
+      return {
+        type: parts[0] || 'todo',
+        id: parts[1] || '',
+        name: parts[2] || '',
+        notes: parts[3] || '',
+        status: parts[4] || ''
+      };
+    });
+    
+    ThingsLogger.info("Advanced search completed successfully", { 
+      query: validatedQuery, 
+      count: searchResults.length,
+      filters: { tags, completed, canceled, trashed }
+    });
+    
+    return DataParser.createSuccessResponse({
+      success: true,
+      query: validatedQuery,
+      filters: { tags, completed, canceled, trashed },
+      count: searchResults.length,
+      results: searchResults,
+    });
   }
 
   async getRecent(args) {
@@ -399,10 +452,7 @@ export class ToolHandlers {
     
     ThingsLogger.info("Updating project", { id: scriptParams.id });
 
-    // This will need a new AppleScript template for updating by ID
-    const scriptTemplate = AppleScriptTemplates.updateProject ? 
-      AppleScriptTemplates.updateProject(scriptParams) :
-      AppleScriptTemplates.updateTodo(scriptParams); // Fallback to updateTodo template
+    const scriptTemplate = AppleScriptTemplates.updateProject(scriptParams);
     
     const result = await this.executeThingsScript(scriptTemplate, scriptParams, "Update project");
     

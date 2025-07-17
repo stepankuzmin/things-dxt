@@ -33,12 +33,23 @@ export class ThingsValidator {
       );
     }
     
-    // Basic sanitization - prevent AppleScript injection
-    if (input.includes('"') || input.includes("'") || input.includes('\\')) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `${fieldName} contains invalid characters`
-      );
+    // Allow quotes and apostrophes since AppleScriptSanitizer handles proper escaping
+    // Only reject truly dangerous patterns like script injection attempts
+    const dangerousPatterns = [
+      /tell\s+application/i,
+      /end\s+tell/i,
+      /set\s+\w+\s+to/i,
+      /do\s+shell\s+script/i,
+      /osascript/i
+    ];
+    
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(input)) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `${fieldName} contains potentially dangerous script patterns`
+        );
+      }
     }
     
     return input.trim();
