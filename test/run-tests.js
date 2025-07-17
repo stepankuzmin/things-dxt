@@ -41,7 +41,8 @@ async function main() {
   const testFiles = [
     path.join(__dirname, 'validation.test.js'),
     path.join(__dirname, 'parameter-mapping.test.js'),
-    path.join(__dirname, 'data-parser.test.js')
+    path.join(__dirname, 'data-parser.test.js'),
+    path.join(__dirname, 'applescript-schedule.test.js')
   ];
   
   let passed = 0;

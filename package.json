@@ -12,6 +12,7 @@
     "test:validation": "node test/validation.test.js",
     "test:parameter": "node test/parameter-mapping.test.js",
     "test:data-parser": "node test/data-parser.test.js",
+    "test:applescript": "node test/applescript-schedule.test.js",
     "package": "dxt pack .",
     "validate": "node -c server/index.js && node -c server/utils.js && node -c server/tool-definitions.js && node -c server/tool-handlers.js && node -c server/server-config.js && node -c server/applescript-templates.js && node -c server/data-parser.js"
   },
