@@ -5,11 +5,21 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 ## Quick Start
 
 1. **Install Dependencies**: `npm install`
-2. **Package Extension**: `dxt pack .`
-3. **Install in Claude Desktop**: Follow Claude Desktop's extension installation process
-4. **Launch Things 3**: Ensure Things 3 is running before using commands
+2. **Run Tests**: `npm test` (optional but recommended)
+3. **Package Extension**: `dxt pack .`
+4. **Install in Claude Desktop**: Follow Claude Desktop's extension installation process
+5. **Launch Things 3**: Ensure Things 3 is running before using commands
 
 > **💡 Pro Tip**: Use `when` for scheduling (when to work on) and `deadline` for final due dates.
+
+## Recent Improvements
+
+### Version 1.2.0
+- **✅ Comprehensive Test Suite**: Added unit tests for validation, parameter mapping, and data parsing
+- **🔧 Performance Optimization**: Reduced AppleScript buffer size from 1MB to 256KB for better efficiency
+- **📝 Enhanced Documentation**: Added inline code documentation for complex validation logic
+- **🔒 Security Improvements**: Enhanced input sanitization while maintaining usability
+- **🐛 Bug Fixes**: Addressed critical issues identified in code review
 
 ## Features
 
@@ -171,14 +181,19 @@ things-dxt/
 ├── manifest.json              # DXT extension manifest
 ├── package.json               # Dependencies and scripts
 ├── README.md                  # Documentation
-└── server/
-    ├── index.js               # Main MCP server
-    ├── tool-definitions.js    # MCP tool schemas
-    ├── tool-handlers.js       # Tool implementation logic
-    ├── server-config.js       # Configuration constants
-    ├── utils.js               # Validation and utilities
-    ├── applescript-templates.js # AppleScript generation
-    └── data-parser.js         # Response parsing
+├── server/
+│   ├── index.js               # Main MCP server
+│   ├── tool-definitions.js    # MCP tool schemas
+│   ├── tool-handlers.js       # Tool implementation logic
+│   ├── server-config.js       # Configuration constants
+│   ├── utils.js               # Validation and utilities
+│   ├── applescript-templates.js # AppleScript generation
+│   └── data-parser.js         # Response parsing
+└── test/
+    ├── run-tests.js           # Test runner
+    ├── validation.test.js     # Input validation tests
+    ├── parameter-mapping.test.js # Parameter mapping tests
+    └── data-parser.test.js    # Data parsing tests
 ```
 
 ### Key Design Principles
@@ -186,20 +201,31 @@ things-dxt/
 - **Security First**: Input validation and AppleScript injection protection
 - **User-Friendly**: Intuitive parameter names and helpful error messages
 - **Robust Error Handling**: Comprehensive error catching and reporting
+- **Test-Driven**: Comprehensive test coverage for reliability
+- **Performance Optimized**: Efficient resource usage with optimized buffer sizes
 - **Extensible**: Easy to add new tools and functionality
 
 ## Security Features
 
 - **Input Validation**: All parameters validated for type, length, and content
-- **AppleScript Protection**: Advanced sanitization prevents code injection
+- **AppleScript Protection**: Advanced sanitization prevents code injection with pattern detection
 - **Error Handling**: Structured error responses with detailed logging
 - **Timeout Management**: Prevents hanging AppleScript operations
 - **Safe Execution**: Secure command execution with process isolation
+- **Comprehensive Testing**: Security validation covered by automated test suite
 
 ## Development
 
 ### Testing
 ```bash
+# Run comprehensive test suite
+npm test
+
+# Run individual test suites
+npm run test:validation      # Input validation tests
+npm run test:parameter      # Parameter mapping tests  
+npm run test:data-parser    # Data parsing tests
+
 # Syntax validation
 npm run validate
 
@@ -208,6 +234,14 @@ DEBUG=true npm start
 
 # Test individual AppleScript in Script Editor
 ```
+
+### Test Coverage
+The extension includes a comprehensive test suite covering:
+- **Input Validation**: String, date, array, and number validation with security checks
+- **Parameter Mapping**: User-friendly parameter conversion and backward compatibility
+- **Data Parsing**: AppleScript output parsing for todos, projects, areas, and search results
+- **Security**: AppleScript injection prevention and safe string escaping
+- **Error Handling**: Consistent error message formatting and validation
 
 ### Adding New Tools
 1. Add tool definition to `tool-definitions.js`
@@ -218,6 +252,7 @@ DEBUG=true npm start
 ### Contributing Guidelines
 - Include comprehensive input validation
 - Add structured error handling
+- Write unit tests for new functionality
 - Update documentation for new features
 - Test thoroughly with Things 3 on macOS
 - Follow established patterns and conventions
