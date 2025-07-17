@@ -36,11 +36,11 @@ export class ThingsValidator {
     // Allow quotes and apostrophes since AppleScriptSanitizer handles proper escaping
     // Only reject truly dangerous patterns like script injection attempts
     const dangerousPatterns = [
-      /tell\s+application/i,
-      /end\s+tell/i,
-      /set\s+\w+\s+to/i,
-      /do\s+shell\s+script/i,
-      /osascript/i
+      /tell\s+application/i,    // Prevents: tell application "System Events" 
+      /end\s+tell/i,            // Prevents: end tell (AppleScript block closure)
+      /set\s+\w+\s+to/i,        // Prevents: set variable to malicious value
+      /do\s+shell\s+script/i,   // Prevents: do shell script "rm -rf /"
+      /osascript/i              // Prevents: osascript command injection
     ];
     
     for (const pattern of dangerousPatterns) {
@@ -224,9 +224,11 @@ export class ParameterMapper {
       id: args.id ? ThingsValidator.validateStringInput(args.id, "id") : null,
       notes: args.notes ? ThingsValidator.validateStringInput(args.notes, "notes", 10000) : null,
       
-      // Map user-friendly parameters to internal parameters
-      // when (user) -> activation_date (internal)
-      // deadline (user) -> due_date (internal)
+      // Map user-friendly parameters to internal Things 3 parameters
+      // User terminology -> Things 3 terminology:
+      // - "when" (when to work on it) -> "activation_date" (Things 3 internal field)
+      // - "deadline" (when it's due) -> "due_date" (Things 3 internal field)
+      // Also supports legacy parameter names for backward compatibility
       activation_date: args.when ? ThingsValidator.validateDateInput(args.when, "when") : 
                       (args.due_date ? ThingsValidator.validateDateInput(args.due_date, "due_date") : null),
       due_date: args.deadline ? ThingsValidator.validateDateInput(args.deadline, "deadline") : null,
@@ -300,20 +302,32 @@ export class ParameterBuilder {
 }
 
 export class AppleScriptSanitizer {
+  /**
+   * Sanitize a string for safe inclusion in AppleScript
+   * @param {*} input - The input to sanitize (will be converted to string)
+   * @returns {string} - Escaped string safe for AppleScript
+   */
   static sanitizeString(input) {
     if (typeof input !== 'string') {
       return '';
     }
     
     // Escape dangerous characters for AppleScript
+    // Order matters: backslashes must be escaped first
     return input
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/'/g, "\\'")
-      .replace(/\r?\n/g, '\\n')
-      .replace(/\t/g, '\\t');
+      .replace(/\\/g, '\\\\')     // Escape backslashes: \ -> \\
+      .replace(/"/g, '\\"')       // Escape double quotes: " -> \"
+      .replace(/'/g, "\\'")       // Escape single quotes: ' -> \'
+      .replace(/\r?\n/g, '\\n')   // Convert newlines to \n
+      .replace(/\t/g, '\\t');     // Convert tabs to \t
   }
   
+  /**
+   * Build an AppleScript from a template, safely replacing placeholders
+   * @param {string} template - AppleScript template with {{placeholder}} markers
+   * @param {Object} params - Parameters to replace in the template
+   * @returns {string} - Complete AppleScript with sanitized parameters
+   */
   static buildScript(template, params = {}) {
     let script = template;
     

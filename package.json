@@ -8,7 +8,7 @@
     "start": "node server/index.js",
     "dev": "DEBUG=true node server/index.js",
     "setup": "./setup.sh",
-    "test": "echo \"No tests specified\" && exit 0",
+    "test": "node test/run-tests.js",
     "package": "dxt pack .",
     "validate": "node -c server/index.js && node -c server/utils.js && node -c server/tool-definitions.js && node -c server/tool-handlers.js && node -c server/server-config.js && node -c server/applescript-templates.js && node -c server/data-parser.js"
   },

@@ -12,7 +12,7 @@ export const SERVER_CONFIG = {
   },
   applescript: {
     timeout: 30000,
-    maxBuffer: 1024 * 1024, // 1MB max buffer
+    maxBuffer: 256 * 1024, // 256KB max buffer - sufficient for typical AppleScript output
   },
 };
 
