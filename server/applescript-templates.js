@@ -34,10 +34,7 @@ export class AppleScriptTemplates {
       script += `, due date: date "{{due_date_formatted}}"`;
     }
     
-    if (activation_date) {
-      // Convert YYYY-MM-DD to AppleScript-friendly format
-      script += `, activation date: date "{{activation_date_formatted}}"`;
-    }
+    // Note: activation_date will be set after creation using schedule command
     
     script += `}`;
     
@@ -70,6 +67,16 @@ export class AppleScriptTemplates {
       end try`;
     }
     
+    // Schedule the todo if activation_date is provided
+    if (activation_date) {
+      script += `
+      try
+        schedule newTodo for date "{{activation_date_formatted}}"
+      on error
+        -- Scheduling failed, continue without scheduling
+      end try`;
+    }
+    
     script += `
       return id of newTodo
     end tell`;
@@ -93,10 +100,7 @@ export class AppleScriptTemplates {
       script += `, due date: date "{{due_date_formatted}}"`;
     }
     
-    if (activation_date) {
-      // Convert YYYY-MM-DD to AppleScript-friendly format
-      script += `, activation date: date "{{activation_date_formatted}}"`;
-    }
+    // Note: activation_date will be set after creation using schedule command
     
     script += `}`;
     
@@ -117,6 +121,16 @@ export class AppleScriptTemplates {
         set tag names of newProject to {${tagPlaceholders}}
       on error
         -- Tags assignment failed, continue without tags
+      end try`;
+    }
+    
+    // Schedule the project if activation_date is provided
+    if (activation_date) {
+      script += `
+      try
+        schedule newProject for date "{{activation_date_formatted}}"
+      on error
+        -- Scheduling failed, continue without scheduling
       end try`;
     }
     
@@ -199,12 +213,11 @@ export class AppleScriptTemplates {
    * Update a todo by ID or name
    */
   static updateTodo({ id, name, title, new_name, notes, due_date, activation_date, project, area, tags, completed, canceled }) {
-    const searchClause = id ? `id "{{id}}"` : `name is "{{name}}"`;
     const nameToUpdate = title || new_name;
     
     let script = `tell application "Things3"
       try
-        set targetTodo to first to do whose ${searchClause}`;
+        set targetTodo to ${id ? 'to do id "{{id}}"' : 'first to do whose name is "{{name}}"'}`;
     
     // Update name/title if provided
     if (nameToUpdate) {
@@ -227,7 +240,7 @@ export class AppleScriptTemplates {
     // Update activation date (when scheduled) if provided
     if (activation_date) {
       script += `
-        set activation date of targetTodo to date "{{activation_date_formatted}}"`;
+        schedule targetTodo for date "{{activation_date_formatted}}"`;
     }
     
     // Update status if provided
@@ -286,12 +299,11 @@ export class AppleScriptTemplates {
    * Update a project by ID or name
    */
   static updateProject({ id, name, title, notes, due_date, activation_date, area, tags, completed, canceled }) {
-    const searchClause = id ? `id "{{id}}"` : `name is "{{name}}"`;
     const nameToUpdate = title;
     
     let script = `tell application "Things3"
       try
-        set targetProject to first project whose ${searchClause}`;
+        set targetProject to ${id ? 'project id "{{id}}"' : 'first project whose name is "{{name}}"'}`;
     
     // Update name/title if provided
     if (nameToUpdate) {
@@ -314,7 +326,7 @@ export class AppleScriptTemplates {
     // Update activation date (when scheduled) if provided
     if (activation_date) {
       script += `
-        set activation date of targetProject to date "{{activation_date_formatted}}"`;
+        schedule targetProject for date "{{activation_date_formatted}}"`;
     }
     
     // Update status if provided
