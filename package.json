@@ -2,7 +2,7 @@
   "name": "things-dxt",
   "version": "1.2.1",
   "type": "module",
-  "description": "Claude Desktop Extension for Things task manager",
+  "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
@@ -22,7 +22,19 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "author": "Claude Desktop Extension",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mbmccormick/things-dxt.git"
+  },
+  "homepage": "https://github.com/mbmccormick/things-dxt",
+  "bugs": {
+    "url": "https://github.com/mbmccormick/things-dxt/issues"
+  },
+  "author": {
+    "name": "Matt McCormick",
+    "email": "matt@mbmccormick.com",
+    "url": "https://github.com/mbmccormick"
+  },
   "license": "MIT",
   "keywords": [
     "claude",
@@ -30,6 +42,9 @@
     "extension",
     "things",
     "tasks",
-    "productivity"
+    "productivity",
+    "todo",
+    "project management",
+    "applescript"
   ]
 }

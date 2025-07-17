@@ -2,6 +2,10 @@
 
 A comprehensive Claude Desktop Extension that provides seamless integration with Things 3, enabling you to manage your complete task workflow directly from Claude conversations using robust AppleScript automation.
 
+## Download
+
+### [⬇️ Download Latest Release](https://github.com/mbmccormick/things-dxt/releases/latest)
+
 ## Quick Start
 
 1. **Install Dependencies**: `npm install`
