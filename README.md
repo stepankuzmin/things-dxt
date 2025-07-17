@@ -14,6 +14,11 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 
 ## Recent Improvements
 
+### Version 1.2.1
+- **🐛 Critical Bug Fix**: Fixed AppleScript date scheduling bug in updateTodo and createTodo functions
+- **✅ Enhanced Testing**: Added comprehensive AppleScript scheduling tests
+- **🔧 Template Improvements**: Updated all date scheduling to use correct `schedule` command
+
 ### Version 1.2.0
 - **✅ Comprehensive Test Suite**: Added unit tests for validation, parameter mapping, and data parsing
 - **🔧 Performance Optimization**: Reduced AppleScript buffer size from 1MB to 256KB for better efficiency
