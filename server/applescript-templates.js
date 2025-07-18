@@ -255,7 +255,10 @@ export class AppleScriptTemplates {
     }
     
     // Update tags if provided
-    if (tags !== undefined) {
+    if (tags !== undefined && tags !== null) {
+      if (!Array.isArray(tags)) {
+        throw new Error('tags parameter must be an array');
+      }
       if (tags.length > 0) {
         const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
         script += `
@@ -351,7 +354,10 @@ export class AppleScriptTemplates {
     }
     
     // Update tags if provided
-    if (tags !== undefined) {
+    if (tags !== undefined && tags !== null) {
+      if (!Array.isArray(tags)) {
+        throw new Error('tags parameter must be an array');
+      }
       if (tags.length > 0) {
         const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
         script += `
