@@ -255,14 +255,27 @@ export class AppleScriptTemplates {
     }
     
     // Update tags if provided
-    if (tags && tags.length > 0) {
-      const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
-      script += `
+    if (tags !== undefined && tags !== null) {
+      if (!Array.isArray(tags)) {
+        throw new Error('tags parameter must be an array');
+      }
+      if (tags.length > 0) {
+        const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
+        script += `
         try
           set tag names of targetTodo to {${tagPlaceholders}}
         on error
           -- Tags assignment failed, continue without tags
         end try`;
+      } else {
+        // Empty array means remove all tags
+        script += `
+        try
+          set tag names of targetTodo to {}
+        on error
+          -- Tags removal failed, continue
+        end try`;
+      }
     }
     
     // Move to project if provided
@@ -341,14 +354,27 @@ export class AppleScriptTemplates {
     }
     
     // Update tags if provided
-    if (tags && tags.length > 0) {
-      const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
-      script += `
+    if (tags !== undefined && tags !== null) {
+      if (!Array.isArray(tags)) {
+        throw new Error('tags parameter must be an array');
+      }
+      if (tags.length > 0) {
+        const tagPlaceholders = tags.map((_, index) => `"{{tag_${index}}}"`).join(", ");
+        script += `
         try
           set tag names of targetProject to {${tagPlaceholders}}
         on error
           -- Tags assignment failed, continue without tags
         end try`;
+      } else {
+        // Empty array means remove all tags
+        script += `
+        try
+          set tag names of targetProject to {}
+        on error
+          -- Tags removal failed, continue
+        end try`;
+      }
     }
     
     // Move to area if provided
