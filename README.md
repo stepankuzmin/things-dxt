@@ -18,6 +18,11 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 
 ## Recent Improvements
 
+### Version 1.2.2
+- **🐛 Fixed Tag Removal**: `update_todo` and `update_project` now properly remove all tags when `tags: []` is provided (#3)
+- **🛡️ Input Validation**: Added type checking for tags parameter with descriptive error messages
+- **✅ Test Coverage**: Added comprehensive test suite for tag handling scenarios
+
 ### Version 1.2.1
 - **🐛 Critical Bug Fix**: Fixed AppleScript date scheduling bug in updateTodo and createTodo functions
 - **✅ Enhanced Testing**: Added comprehensive AppleScript scheduling tests
@@ -109,10 +114,12 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 #### `update_todo` - Update existing todo
 **Required**: `id`  
 **Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `completed`, `canceled`
+- `tags`: Array of tag names. Use `[]` to remove all tags
 
 #### `update_project` - Update existing project
 **Required**: `id`  
 **Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `completed`, `canceled`
+- `tags`: Array of tag names. Use `[]` to remove all tags
 
 #### `show_item` - Show item details
 **Required**: `id`
@@ -137,6 +144,11 @@ Create a new project "Website Redesign" in my "Product Development" area with de
 ### Search & Organization
 ```
 Search for all tasks containing "meeting" and show me what's tagged with "urgent"
+```
+
+### Tag Management
+```
+Remove all tags from task ID "abc123" by updating it with tags: []
 ```
 
 ### Weekly Review
@@ -202,7 +214,9 @@ things-dxt/
     ├── run-tests.js           # Test runner
     ├── validation.test.js     # Input validation tests
     ├── parameter-mapping.test.js # Parameter mapping tests
-    └── data-parser.test.js    # Data parsing tests
+    ├── data-parser.test.js    # Data parsing tests
+    ├── applescript-schedule.test.js # Date scheduling tests
+    └── tags-handling.test.js  # Tag handling tests
 ```
 
 ### Key Design Principles
@@ -234,6 +248,7 @@ npm test
 npm run test:validation      # Input validation tests
 npm run test:parameter      # Parameter mapping tests  
 npm run test:data-parser    # Data parsing tests
+npm run test:applescript    # AppleScript scheduling tests
 
 # Syntax validation
 npm run validate
@@ -251,6 +266,8 @@ The extension includes a comprehensive test suite covering:
 - **Data Parsing**: AppleScript output parsing for todos, projects, areas, and search results
 - **Security**: AppleScript injection prevention and safe string escaping
 - **Error Handling**: Consistent error message formatting and validation
+- **Date Scheduling**: Proper AppleScript date handling with `schedule` command
+- **Tag Management**: Empty array handling, type validation, and tag removal scenarios
 
 ### Adding New Tools
 1. Add tool definition to `tool-definitions.js`
