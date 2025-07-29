@@ -106,9 +106,9 @@ class ThingsExtension {
     try {
       ThingsLogger.debug("Executing AppleScript", { scriptLength: script.length });
       
-      // Properly escape the script for shell execution
-      const escapedScript = script.replace(/'/g, "'\"'\"'");
-      const command = `osascript -e '${escapedScript}'`;
+      // Use double quotes for shell command to avoid conflicts with AppleScript single quote escaping
+      const escapedScript = script.replace(/"/g, '\\"');
+      const command = `osascript -e "${escapedScript}"`;
       
       const { stdout, stderr } = await execAsync(command, {
         timeout,

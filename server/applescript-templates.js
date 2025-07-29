@@ -21,7 +21,7 @@ export class AppleScriptTemplates {
   /**
    * Create a new to-do item
    */
-  static createTodo({ name, notes, due_date, activation_date, project, area, tags }) {
+  static createTodo({ name, notes, due_date, activation_date, project, list_id, area, area_id, tags }) {
     let script = `tell application "Things3"
       set newTodo to make new to do with properties {name: "{{name}}"`;
     
@@ -38,13 +38,29 @@ export class AppleScriptTemplates {
     
     script += `}`;
     
-    if (project) {
+    if (list_id) {
+      script += `
+      try
+        set targetProject to project id "{{list_id}}"
+        move newTodo to targetProject
+      on error
+        -- Project not found, leave todo in inbox
+      end try`;
+    } else if (project) {
       script += `
       try
         set targetProject to first project whose name is "{{project}}"
         move newTodo to targetProject
       on error
         -- Project not found, leave todo in inbox
+      end try`;
+    } else if (area_id) {
+      script += `
+      try
+        set targetArea to area id "{{area_id}}"
+        move newTodo to targetArea
+      on error
+        -- Area not found, leave todo in inbox
       end try`;
     } else if (area) {
       script += `
@@ -87,7 +103,7 @@ export class AppleScriptTemplates {
   /**
    * Create a new project
    */
-  static createProject({ name, notes, area, due_date, activation_date, tags, todos }) {
+  static createProject({ name, notes, area, area_id, due_date, activation_date, tags, todos }) {
     let script = `tell application "Things3"
       set newProject to make new project with properties {name: "{{name}}"`;
     
@@ -104,7 +120,15 @@ export class AppleScriptTemplates {
     
     script += `}`;
     
-    if (area) {
+    if (area_id) {
+      script += `
+      try
+        set targetArea to area id "{{area_id}}"
+        move newProject to targetArea
+      on error
+        -- Area not found, leave project without area assignment
+      end try`;
+    } else if (area) {
       script += `
       try
         set targetArea to first area whose name is "{{area}}"

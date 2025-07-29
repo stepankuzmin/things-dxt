@@ -96,10 +96,51 @@ This is a Claude Desktop Extension (DXT) that integrates with Things 3 task mana
 - Use `project id "..."` not `first project whose id "..."`
 - The `whose` syntax causes parsing errors in AppleScript
 
+### AppleScript String Escaping
+**CRITICAL**: Proper AppleScript escaping is essential to prevent syntax errors and security issues.
+
+**Key Principles**:
+- **Apostrophes**: Do NOT escape apostrophes (`'`) inside double-quoted AppleScript strings
+- **Double Quotes**: Escape double quotes (`"`) as `\"` for shell command compatibility
+- **Shell vs AppleScript**: Use different escaping strategies for different layers
+
+**Implementation Details**:
+```javascript
+// ✅ CORRECT: AppleScript sanitization (server/utils.js)
+static sanitizeString(input) {
+  return input
+    .replace(/\\/g, '\\\\')     // Escape backslashes: \ -> \\
+    .replace(/"/g, '\\"')       // Escape double quotes: " -> \"
+    .replace(/\r?\n/g, '\\n')   // Convert newlines to \n
+    .replace(/\t/g, '\\t');     // Convert tabs to \t
+    // Note: NO apostrophe escaping - apostrophes work fine in AppleScript double quotes
+}
+
+// ✅ CORRECT: Shell command execution (server/index.js)
+const escapedScript = script.replace(/"/g, '\\"');
+const command = `osascript -e "${escapedScript}"`;
+```
+
+**Common Mistakes to Avoid**:
+```javascript
+// ❌ WRONG: Don't escape apostrophes
+.replace(/'/g, "'\"'\"'")  // This breaks AppleScript syntax
+
+// ❌ WRONG: Don't use single quotes for shell commands
+const command = `osascript -e '${script}'`;  // Conflicts with AppleScript escaping
+```
+
+**Why This Works**:
+- AppleScript natively handles apostrophes inside double-quoted strings: `"Matt's iPhone"` ✅
+- Shell double quotes properly escape the AppleScript quotes: `osascript -e "tell application \"Things3\"..."`
+- No conflict between AppleScript apostrophes and shell quoting
+
+**Testing**: Always test with real apostrophes like `Matt's iPhone` to verify escaping works correctly.
+
 ### Security Considerations
 - All user input goes through `ThingsValidator` to prevent injection
 - AppleScript dangerous patterns are detected and rejected
-- String escaping is handled by `AppleScriptSanitizer`
+- String escaping is handled by `AppleScriptSanitizer` (see above section)
 - AppleScript execution has timeouts and buffer limits
 
 ### Testing Strategy
@@ -142,3 +183,5 @@ The packaged DXT file will be created at `things-dxt.dxt` with the new version n
 - AppleScript output is tab-separated - account for this in parsing
 - Things 3 must be running for AppleScript to work
 - Date formats must be YYYY-MM-DD from user, converted to "Month Day, Year" for AppleScript
+- **NEVER escape apostrophes** in AppleScript strings - they work natively in double quotes
+- **ALWAYS use double quotes** for shell commands to avoid escaping conflicts
