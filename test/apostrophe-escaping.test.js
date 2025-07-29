@@ -71,4 +71,22 @@ try {
   process.exit(1);
 }
 
+// Test 6: Shell command escaping doesn't interfere
+try {
+  // Simulate the shell escaping that executeAppleScript does
+  const script = 'tell application "Things3" to make new to do with properties {name: "Matt\'"\'"\'s iPhone"}';
+  const shellEscaped = script.replace(/"/g, '\\"');
+  const command = `osascript -e "${shellEscaped}"`;
+  
+  // Should have the escaped quotes but preserve apostrophe escaping
+  assert(command.includes('"Matt'));
+  assert(command.includes('s iPhone\\"'));
+  // Should not have the old double escaping pattern
+  assert(!command.includes('"\'"\'"\'"\'"\''));
+  console.log('✅ Shell command escaping compatibility');
+} catch (error) {
+  console.log('❌ Shell command escaping compatibility:', error.message);
+  process.exit(1);
+}
+
 console.log('\n✨ All apostrophe escaping tests passed!');
