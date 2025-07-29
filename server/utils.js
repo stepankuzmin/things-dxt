@@ -324,7 +324,7 @@ export class AppleScriptSanitizer {
     return input
       .replace(/\\/g, '\\\\')     // Escape backslashes: \ -> \\
       .replace(/"/g, '\\"')       // Escape double quotes: " -> \"
-      .replace(/'/g, "\\'")       // Escape single quotes: ' -> \'
+      .replace(/'/g, "'\"'\"'")   // Escape single quotes for AppleScript: ' -> '"'"'
       .replace(/\r?\n/g, '\\n')   // Convert newlines to \n
       .replace(/\t/g, '\\t');     // Convert tabs to \t
   }
