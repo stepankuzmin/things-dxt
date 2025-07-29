@@ -321,10 +321,10 @@ export class AppleScriptSanitizer {
     
     // Escape dangerous characters for AppleScript
     // Order matters: backslashes must be escaped first
+    // Note: Apostrophes don't need escaping inside double-quoted AppleScript strings
     return input
       .replace(/\\/g, '\\\\')     // Escape backslashes: \ -> \\
       .replace(/"/g, '\\"')       // Escape double quotes: " -> \"
-      .replace(/'/g, "'\"'\"'")   // Escape single quotes for AppleScript: ' -> '"'"'
       .replace(/\r?\n/g, '\\n')   // Convert newlines to \n
       .replace(/\t/g, '\\t');     // Convert tabs to \t
   }

@@ -63,7 +63,7 @@ try {
 try {
   const input = 'Task with "quotes" and \'apostrophes\'';
   const result = AppleScriptSanitizer.sanitizeString(input);
-  assert.equal(result, 'Task with \\"quotes\\" and \'"\'"\'apostrophes\'"\'"\'');
+  assert.equal(result, 'Task with \\"quotes\\" and \'apostrophes\'');
   console.log('✅ AppleScript quote escaping');
 } catch (error) {
   console.log('❌ AppleScript quote escaping:', error.message);
