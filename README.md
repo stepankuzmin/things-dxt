@@ -18,6 +18,13 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 
 ## Recent Improvements
 
+### Version 1.2.4
+- **🐛 Fixed Apostrophe Handling**: Resolved AppleScript syntax errors when creating todos/projects with apostrophes (#7)
+- **✨ Enhanced Area Support**: Added `area_id` parameter support for precise area assignment (#8)  
+- **🔧 Improved Shell Escaping**: Fixed double escaping issues in AppleScript execution
+- **📚 Comprehensive Documentation**: Added detailed AppleScript escaping guidance to CLAUDE.md
+- **✅ Enhanced Testing**: Added apostrophe handling and area_id support test suites
+
 ### Version 1.2.3
 - **🐛 Fixed Project Todos**: `add_project` now properly creates todos when `todos` array is provided (#5)
 - **📝 Documentation**: Added version bumping instructions to CLAUDE.md
@@ -27,11 +34,6 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 - **🐛 Fixed Tag Removal**: `update_todo` and `update_project` now properly remove all tags when `tags: []` is provided (#3)
 - **🛡️ Input Validation**: Added type checking for tags parameter with descriptive error messages
 - **✅ Test Coverage**: Added comprehensive test suite for tag handling scenarios
-
-### Version 1.2.1
-- **🐛 Critical Bug Fix**: Fixed AppleScript date scheduling bug in updateTodo and createTodo functions
-- **✅ Enhanced Testing**: Added comprehensive AppleScript scheduling tests
-- **🔧 Template Improvements**: Updated all date scheduling to use correct `schedule` command
 
 ## Features
 
