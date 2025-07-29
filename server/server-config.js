@@ -6,7 +6,7 @@
 
 export const SERVER_CONFIG = {
   name: "things-dxt",
-  version: "1.2.2",
+  version: "1.2.3",
   capabilities: {
     tools: {},
   },

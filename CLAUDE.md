@@ -119,6 +119,21 @@ To add a new tool:
 5. Add unit tests
 6. Update documentation
 
+## Version Bumping
+
+When releasing a new version, update the version number in **all three** locations:
+
+1. **`package.json`** - Update the `version` field
+2. **`manifest.json`** - Update the `version` field
+3. **`server/server-config.js`** - Update `SERVER_CONFIG.version`
+
+```bash
+# After updating all three files, repackage the extension:
+dxt pack .
+```
+
+The packaged DXT file will be created at `things-dxt.dxt` with the new version number.
+
 ## Common Pitfalls
 
 - Don't use `first ... whose id` syntax in AppleScript templates

@@ -1,6 +1,6 @@
 {
   "name": "things-dxt",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "type": "module",
   "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
   "main": "server/index.js",
