@@ -87,7 +87,7 @@ export class AppleScriptTemplates {
   /**
    * Create a new project
    */
-  static createProject({ name, notes, area, due_date, activation_date, tags }) {
+  static createProject({ name, notes, area, due_date, activation_date, tags, todos }) {
     let script = `tell application "Things3"
       set newProject to make new project with properties {name: "{{name}}"`;
     
@@ -132,6 +132,20 @@ export class AppleScriptTemplates {
       on error
         -- Scheduling failed, continue without scheduling
       end try`;
+    }
+    
+    // Create todos if provided
+    if (todos && todos.length > 0) {
+      script += `
+      -- Create todos for the project`;
+      todos.forEach((_, index) => {
+        script += `
+      try
+        make new to do with properties {name: "{{todo_${index}}}", project: newProject}
+      on error
+        -- Failed to create todo, continue with others
+      end try`;
+      });
     }
     
     script += `
