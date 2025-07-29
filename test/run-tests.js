@@ -43,7 +43,8 @@ async function main() {
     path.join(__dirname, 'parameter-mapping.test.js'),
     path.join(__dirname, 'data-parser.test.js'),
     path.join(__dirname, 'applescript-schedule.test.js'),
-    path.join(__dirname, 'tags-handling.test.js')
+    path.join(__dirname, 'tags-handling.test.js'),
+    path.join(__dirname, 'project-todos.test.js')
   ];
   
   let passed = 0;

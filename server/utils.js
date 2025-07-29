@@ -273,6 +273,13 @@ export class ParameterBuilder {
       });
     }
     
+    // Add individual todo parameters
+    if (baseParams.todos && Array.isArray(baseParams.todos)) {
+      baseParams.todos.forEach((todo, index) => {
+        buildParams[`todo_${index}`] = todo;
+      });
+    }
+    
     // Add formatted due date parameter
     if (dueDate) {
       try {
