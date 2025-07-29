@@ -18,6 +18,11 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 
 ## Recent Improvements
 
+### Version 1.2.3
+- **🐛 Fixed Project Todos**: `add_project` now properly creates todos when `todos` array is provided (#5)
+- **📝 Documentation**: Added version bumping instructions to CLAUDE.md
+- **✅ Test Coverage**: Added tests for project todos functionality
+
 ### Version 1.2.2
 - **🐛 Fixed Tag Removal**: `update_todo` and `update_project` now properly remove all tags when `tags: []` is provided (#3)
 - **🛡️ Input Validation**: Added type checking for tags parameter with descriptive error messages
@@ -27,13 +32,6 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 - **🐛 Critical Bug Fix**: Fixed AppleScript date scheduling bug in updateTodo and createTodo functions
 - **✅ Enhanced Testing**: Added comprehensive AppleScript scheduling tests
 - **🔧 Template Improvements**: Updated all date scheduling to use correct `schedule` command
-
-### Version 1.2.0
-- **✅ Comprehensive Test Suite**: Added unit tests for validation, parameter mapping, and data parsing
-- **🔧 Performance Optimization**: Reduced AppleScript buffer size from 1MB to 256KB for better efficiency
-- **📝 Enhanced Documentation**: Added inline code documentation for complex validation logic
-- **🔒 Security Improvements**: Enhanced input sanitization while maintaining usability
-- **🐛 Bug Fixes**: Addressed critical issues identified in code review
 
 ## Features
 
