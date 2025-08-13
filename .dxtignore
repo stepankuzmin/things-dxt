@@ -16,10 +16,9 @@ test/
 coverage/
 
 # Build artifacts that aren't needed at runtime
-jxa/src/
 .github/
-docs/ARCHITECTURE.md
-docs/INSTRUCTIONS.md
+docs/
+jxa/src/
 
 # Git
 .git/
