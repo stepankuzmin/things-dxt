@@ -4,7 +4,7 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 
 ## Download
 
-### [⬇️ Download Latest Release](https://github.com/mbmccormick/things-dxt/releases/latest)
+### [⬇️ Download Latest Release](https://github.com/stepankuzmin/things-dxt/releases/latest)
 
 ## Quick Start
 
@@ -35,7 +35,7 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 - **Project & Area Organization**: Full project and area management capabilities
 - **Advanced Search**: Multiple search types across all your Things data
 
-### 🔍 Discovery & Navigation  
+### 🔍 Discovery & Navigation
 - **Tag Management**: Get all tags and find items by specific tags
 - **Logbook Access**: View completed tasks with flexible time periods
 - **Trash Management**: Access and review trashed items
@@ -52,11 +52,11 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 ### 📝 Creation Tools
 
 #### `add_todo` - Create a new to-do
-**Required**: `title`  
+**Required**: `title`
 **Optional**: `notes`, `when`, `deadline`, `list_title`, `list_id`, `heading`, `tags`, `checklist_items`
 
-#### `add_project` - Create a new project  
-**Required**: `title`  
+#### `add_project` - Create a new project
+**Required**: `title`
 **Optional**: `notes`, `when`, `deadline`, `area_title`, `area_id`, `tags`, `todos`
 
 ### 📋 List Access Tools
@@ -85,11 +85,11 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 #### `search_items` - Universal search
 **Required**: `query`
 
-#### `search_todos` - Todo-specific search  
+#### `search_todos` - Todo-specific search
 **Required**: `query`
 
 #### `search_advanced` - Multi-criteria search
-**Required**: `query`  
+**Required**: `query`
 **Optional**: `tags`, `completed`, `canceled`, `trashed`
 
 #### `get_tags` - Get all tags
@@ -104,13 +104,13 @@ A comprehensive Claude Desktop Extension that provides seamless integration with
 ### ✏️ Update Tools
 
 #### `update_todo` - Update existing todo
-**Required**: `id`  
+**Required**: `id`
 **Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `checklist_items`, `completed`, `canceled`
 - `tags`: Array of tag names. Use `[]` to remove all tags
 - `checklist_items`: Array of checklist items. Appends to existing notes as formatted list
 
 #### `update_project` - Update existing project
-**Required**: `id`  
+**Required**: `id`
 **Optional**: `title`, `notes`, `when`, `deadline`, `tags`, `completed`, `canceled`
 - `tags`: Array of tag names. Use `[]` to remove all tags
 
@@ -310,9 +310,9 @@ Solution: Launch Things 3 application and ensure it's running (not just in dock)
 
 **Permission Errors**
 ```
-Solution: 
+Solution:
 1. System Preferences > Security & Privacy > Privacy
-2. Select "Automation" 
+2. Select "Automation"
 3. Grant permission for your terminal/Claude Desktop to control Things 3
 ```
 
@@ -325,7 +325,7 @@ DEBUG=true npm start
 ### Getting Help
 
 - **Things 3 Issues**: Contact Cultured Code support
-- **Claude Desktop**: Follow Claude Desktop documentation  
+- **Claude Desktop**: Follow Claude Desktop documentation
 - **Extension Issues**: Create issue in project repository
 
 ## License

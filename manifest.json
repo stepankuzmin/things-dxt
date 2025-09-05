@@ -6,17 +6,16 @@
   "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
   "long_description": "This extension provides seamless integration between Claude Desktop and Things task manager through AppleScript automation. Create, manage, and organize your tasks directly from Claude conversations. Features include creating to-dos, projects, areas, tags, and managing your task workflow efficiently.",
   "author": {
-    "name": "Matt McCormick",
-    "email": "matt@mbmccormick.com",
-    "url": "https://github.com/mbmccormick"
+    "name": "Stepan Kuzmin",
+    "url": "https://stepankuzmin.com/"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbmccormick/things-dxt.git"
+    "url": "https://github.com/stepankuzmin/things-dxt.git"
   },
-  "homepage": "https://github.com/mbmccormick/things-dxt",
-  "documentation": "https://github.com/mbmccormick/things-dxt/blob/main/README.md",
-  "support": "https://github.com/mbmccormick/things-dxt/issues",
+  "homepage": "https://github.com/stepankuzmin/things-dxt",
+  "documentation": "https://github.com/stepankuzmin/things-dxt/blob/main/README.md",
+  "support": "https://github.com/stepankuzmin/things-dxt/issues",
   "icon": "icon.png",
   "license": "MIT",
   "keywords": [
