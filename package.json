@@ -1,8 +1,20 @@
 {
   "name": "things-dxt",
   "version": "1.3.0",
-  "type": "module",
   "description": "Claude Desktop Extension for Things, the award-winning personal task manager",
+  "license": "MIT",
+  "homepage": "https://github.com/stepankuzmin/things-dxt",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stepankuzmin/things-dxt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stepankuzmin/things-dxt/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
   "main": "server/index.js",
   "scripts": {
     "start": "npm run build && node server/index.js",
@@ -14,30 +26,18 @@
     "validate": "node -c server/index.js && node -c server/utils.js && node -c server/tool-definitions.js && node -c server/server-config.js && node -c server/response-formatter.js && node -c server/jxa-executor.js && node -c jxa/build.js",
     "test": "node test/run-tests.js",
     "test:unit": "find test/unit -name '*.test.js' -exec node {} \\;",
-    "test:integration": "find test/integration -name '*.test.js' -exec node {} \\;", 
+    "test:integration": "find test/integration -name '*.test.js' -exec node {} \\;",
     "test:regression": "find test/regression -name '*.test.js' -exec node {} \\;",
-    "test:watch": "nodemon --watch test --watch server --watch jxa/src --exec 'npm test'"
+    "test:watch": "nodemon --watch test --watch server --watch jxa/src --exec 'npm test'",
+    "sign": "dxt sign --self-signed things-dxt.dxt"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "devDependencies": {
+    "@anthropic-ai/dxt": "^0.2.6",
+    "esbuild": "^0.25.8"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mbmccormick/things-dxt.git"
-  },
-  "homepage": "https://github.com/mbmccormick/things-dxt",
-  "bugs": {
-    "url": "https://github.com/mbmccormick/things-dxt/issues"
-  },
-  "author": {
-    "name": "Matt McCormick",
-    "email": "matt@mbmccormick.com",
-    "url": "https://github.com/mbmccormick"
-  },
-  "license": "MIT",
   "keywords": [
     "claude",
     "desktop",
@@ -49,8 +49,5 @@
     "project management",
     "jxa",
     "javascript-for-automation"
-  ],
-  "devDependencies": {
-    "esbuild": "^0.25.8"
-  }
+  ]
 }
